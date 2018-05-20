@@ -3956,6 +3956,14 @@ __setparam_dl(struct task_struct *p, const struct sched_attr *attr)
 	dl_se->flags = attr->sched_flags;
 	dl_se->dl_bw = to_ratio(dl_se->dl_period, dl_se->dl_runtime);
 
+	/* ISHAN VARADE */
+	dl_se->move_to_temp = false;
+	dl_se->move_to_global = false;
+	dl_se->first_instance = 1;
+	dl_se->gflag = 0;
+	dl_se->enqueue_time_flag = 0;
+	dl_se->dequeue_time_flag = 0;
+
 	/*
 	 * Changing the parameters of a task is 'tricky' and we're not doing
 	 * the correct thing -- also see task_dead_dl() and switched_from_dl().
@@ -4438,12 +4446,12 @@ int global_to_ready(void * unused)
 				task = container_of(sched_dl_entity, struct task_struct, dl);
 				if (sched_dl_entity->gflag)
 				{
-					if (0 == sched_dl_entity->task_in_temp && 0 == sched_dl_entity->move_to_global)
+					if (!sched_dl_entity->task_in_temp && !sched_dl_entity->move_to_global)
 					{
 						__acquires(rq->lock);
 						dequeue_relq_dl_task(rq, task);
-						sched_dl_entity->move_to_global = 0;
-						sched_dl_entity->gflag = 0;
+						sched_dl_entity->move_to_global = false;
+						sched_dl_entity->gflag = false;
 						__release(rq->lock);
 						wake_up_process(task);	// To put the task into the ready.
 
@@ -4451,7 +4459,7 @@ int global_to_ready(void * unused)
 						 * Time Calculations
 						 */
 						sched_dl_entity->enq_end = ktime_get();
-						ktime_t enqueue_time = ktime_sub(sched_dl_entity->enq_end, sched_dl_entity->enq_start);
+						ktime_t enqueue_time = ktime_sub(sched_dl_entity->enq_end,sched_dl_entity->enq_start);
 						printk(KERN_INFO "# ISHAN VARADE: Enqueue time from release (enqueue_end - enqueue_start): %lld\n.", ktime_to_ns(enqueue_time));
 						sched_dl_entity->enq_end = ktime_set(0, 0);
 						sched_dl_entity->enq_start = ktime_set(0, 0);
@@ -4590,7 +4598,7 @@ int sched_setscheduler2(struct task_struct *p, const struct sched_attr *attr)
 		for_each_possible_cpu(i)
 		{
 			rq = cpu_rq(i);
-			rq->task_in_temp = 0;
+			rq->task_in_temp = false;
 		}
 
 	}
@@ -4819,7 +4827,7 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	struct sched_dl_entity *dl_se = &task->dl;
 	struct rq *rq = cpu_rq(smp_processor_id());
 	__release(rq->lock);
-	if(dl_se->first_instance == -1)
+	if(-1 == dl_se->first_instance)
 	{
 		printk(KERN_ERR "ISHAN VARADE: restart_hrtimer_callback(): No restart of timer.\n");
 		return HRTIMER_NORESTART;

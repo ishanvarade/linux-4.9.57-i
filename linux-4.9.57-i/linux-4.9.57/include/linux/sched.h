@@ -1446,16 +1446,15 @@ struct sched_dl_entity {
 
 	/*
 	 * ISHAN VARADE
-	 * INITIALIZATION is required
+	 * INITIALIZATION is required: at
 	 */
-	int first_instance;
 	bool move_to_temp;	//int move_to_temp;	// Set when task finished its job in the current cycle and now ready to move to temporarily release queue.
 	bool move_to_global;	//int move_to_global; // Need to see where is this changing
 	bool task_in_temp;	//int task_in_temp;
-//	int first_instance;
+	int first_instance;
 //	struct hrtimer *release_timer;
 //	int palgo;
-	int gflag;	// local timer_expired flag
+	bool gflag;	// local timer_expired flag
 //	ktime_t enqueue_time;
 	bool enqueue_time_flag;	//int enqueue_time_flag;
 //	ktime_t dequeue_time;
