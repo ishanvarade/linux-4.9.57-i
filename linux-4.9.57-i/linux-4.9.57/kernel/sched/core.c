@@ -3962,7 +3962,7 @@ __setparam_dl(struct task_struct *p, const struct sched_attr *attr)
 	dl_se->first_instance = 1;
 	dl_se->gflag = 0;
 	dl_se->enqueue_time_flag = 0;
-	dl_se->dequeue_time_flag = 0;
+	//dl_se->dequeue_time_flag = 0;
 
 	/*
 	 * Changing the parameters of a task is 'tricky' and we're not doing
