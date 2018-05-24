@@ -656,7 +656,7 @@ struct rq {
 	struct rt_rq rt;
 	struct dl_rq dl;
 	/*	ISHAN VARADE */
-	struct dl_relq relq;	/* Release Queue */
+	struct dl_relq relq;	/* Release Queue and Global Release Queue */
 
 #ifdef CONFIG_FAIR_GROUP_SCHED
 	/* list of leaf cfs_rq on this cpu: */
