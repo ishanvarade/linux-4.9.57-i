@@ -91,6 +91,8 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
+/*	ISHAN VARADE */
+#include <linux/cpufreq.h>
 
 /*ISHAN VARADE*/
 static struct task_struct *dequeue_service_thread;
@@ -4966,6 +4968,55 @@ static void __sched_task_complete(void)
 	printk(KERN_INFO "#ISHAN VARADE: Real-time execution task finished.\n");
 	hrtimer_cancel(&task->timer);
 	destroy_hrtimer_on_stack(&task->timer);
+}
+
+/*
+ * ISHAN VARADE:
+ */
+void cpufreq_rdms_info(void)
+{
+	/*
+	u32 high, low;
+	rdmsr(MSR_IA32_PERF_CTL, low, high);
+	 */
+
+	struct cpufreq_policy *policy;
+	struct cpufreq_driver *cpufreq_driver;
+	int ret;
+
+	/*
+	 * cpufreq.c from cpufreq_online()
+	 */
+	policy = per_cpu(cpufreq_cpu_data, cpu);
+	if (policy)
+	{
+		//		WARN_ON(!cpumask_test_cpu(cpu, policy->related_cpus));
+		//		if (!policy_is_inactive(policy))
+		//			return cpufreq_add_policy_cpu(policy, cpu);
+
+		/* This is the only online CPU for the policy.  Start over. */
+		//		new_policy = false;
+		//		down_write(&policy->rwsem);
+		//		policy->cpu = cpu;
+		//		policy->governor = NULL;
+		//		up_write(&policy->rwsem);
+	}
+	else
+	{
+		//		new_policy = true;
+		policy = cpufreq_policy_alloc(cpu);
+		if (!policy)
+			return -ENOMEM;
+	}
+
+	ret = cpufreq_driver->init(policy);
+	if (ret)
+	{
+		printk(KERN_ERR "# ISHAN VARADE: initialization failed\n");
+		return;
+		//			goto out_free_policy;
+	}
+	printk(KERN_INFO "# ISHAN VARADE: Governer: %s\n", policy);
 }
 
 /*
