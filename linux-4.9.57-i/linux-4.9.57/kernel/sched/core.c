@@ -5163,7 +5163,7 @@ SYSCALL_DEFINE0(sched_task_complete)
 	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
 	if (policy)
 	{
-		printk(KERN_INFO "#ISHAN VARADE: policy is passed.\n");
+		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n", cpu, policy->governor->name);
 	}
 //	cpufreq_rdmsr_info();
 //	cpu_freq_read_intel();
