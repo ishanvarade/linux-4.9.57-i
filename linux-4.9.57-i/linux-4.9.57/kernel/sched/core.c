@@ -4970,6 +4970,14 @@ static void __sched_task_complete(void)
 	destroy_hrtimer_on_stack(&task->timer);
 }
 
+static u32 cpu_freq_read_intel(void)
+{
+	u32 val, dummy;
+
+	rdmsr(MSR_IA32_PERF_CTL, val, dummy);
+	printk(KERN_INFO "#ISHAN VARADE: CPU_FREQ_READ_INTEL: %lu\n", val);
+	return val;
+}
 /*
  * ISHAN VARADE
  */
@@ -4988,9 +4996,9 @@ void cpufreq_rdmsr_info(void)
 	struct cpufreq_driver *cpufreq_driver;
 	int ret;
 
-	unsigned int cpu = 2;
+	int cpu = get_cpu();
 
-	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdmsr starting Governor: %s.\n", cpufreq_cpu_data->governor->name);
+	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdmsr starting Governor:%d\n", cpu);//, cpufreq_cpu_data->governor->name);
 
 	/*
 	 * cpufreq.c from cpufreq_online()
@@ -5090,7 +5098,7 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 	int retval;
 
 	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
-	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real systemcall called\n");
+	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real systemcall callesched_setparam_reald\n");
 	printk(KERN_INFO "# ISHAN VARADE: 2. do_sched_setscheduler2  called\n");
 
 	if (!uattr || pid < 0)// flags?
@@ -5143,8 +5151,8 @@ SYSCALL_DEFINE0(sched_task_complete)
 {
 	//__sched_task_complete();
 	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
-	cpufreq_rdmsr_info();
-
+//	cpufreq_rdmsr_info();
+	cpu_freq_read_intel();
 }
 
 /**
