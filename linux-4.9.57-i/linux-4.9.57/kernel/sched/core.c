@@ -5152,10 +5152,21 @@ SYSCALL_DEFINE0(sched_do_job_complete)
  */
 SYSCALL_DEFINE0(sched_task_complete)
 {
+	// Important
 	//__sched_task_complete();
+
+
+	//Delete
 	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
+
+	int cpu = get_cpu();
+	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
+	if (policy)
+	{
+		printk(KERN_INFO "#ISHAN VARADE: policy is passed.\n");
+	}
 //	cpufreq_rdmsr_info();
-	cpu_freq_read_intel();
+//	cpu_freq_read_intel();
 }
 
 /**
