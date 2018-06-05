@@ -4977,7 +4977,7 @@ static DEFINE_PER_CPU(struct cpufreq_policy *, cpufreq_cpu_data);
 /*
  * ISHAN VARADE:
  */
-void cpufreq_rdms_info(void)
+void cpufreq_rdmsr_info(void)
 {
 	/*
 	u32 high, low;
@@ -4989,6 +4989,8 @@ void cpufreq_rdms_info(void)
 	int ret;
 
 	unsigned int cpu = 2;
+
+	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdmsr starting Governor: %s.\n", cpufreq_cpu_data->governor->name);
 
 	/*
 	 * cpufreq.c from cpufreq_online()
@@ -5141,7 +5143,7 @@ SYSCALL_DEFINE0(sched_task_complete)
 {
 	//__sched_task_complete();
 	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
-	cpufreq_rdms_info();
+	cpufreq_rdmsr_info();
 
 }
 
