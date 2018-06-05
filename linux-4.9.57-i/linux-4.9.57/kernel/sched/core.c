@@ -4974,8 +4974,11 @@ static u32 cpu_freq_read_intel(void)
 {
 	u32 val, dummy;
 
+	int cpu = get_cpu();
+
+	printk(KERN_INFO "#ISHAN VARADE: CPU#: %d.\n", cpu);
 	rdmsr(MSR_IA32_PERF_CTL, val, dummy);
-	printk(KERN_INFO "#ISHAN VARADE: CPU_FREQ_READ_INTEL: %lu\n", val);
+	printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, CPU_FREQ_READ_INTEL: %lu\n", cpu, val);
 	return val;
 }
 /*
