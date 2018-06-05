@@ -5151,8 +5151,8 @@ SYSCALL_DEFINE0(sched_task_complete)
 {
 	//__sched_task_complete();
 	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
-	cpufreq_rdmsr_info();
-//	cpu_freq_read_intel();
+//	cpufreq_rdmsr_info();
+	cpu_freq_read_intel();
 }
 
 /**
