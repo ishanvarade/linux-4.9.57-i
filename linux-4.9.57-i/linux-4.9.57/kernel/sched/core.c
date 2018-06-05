@@ -4971,6 +4971,10 @@ static void __sched_task_complete(void)
 }
 
 /*
+ * ISHAN VARADE
+ */
+static DEFINE_PER_CPU(struct cpufreq_policy *, cpufreq_cpu_data);
+/*
  * ISHAN VARADE:
  */
 void cpufreq_rdms_info(void)
@@ -4983,6 +4987,8 @@ void cpufreq_rdms_info(void)
 	struct cpufreq_policy *policy;
 	struct cpufreq_driver *cpufreq_driver;
 	int ret;
+
+	unsigned int cpu = 2;
 
 	/*
 	 * cpufreq.c from cpufreq_online()
@@ -5004,9 +5010,9 @@ void cpufreq_rdms_info(void)
 	else
 	{
 		//		new_policy = true;
-		policy = cpufreq_policy_alloc(cpu);
-		if (!policy)
-			return -ENOMEM;
+//		policy = cpufreq_policy_alloc(cpu);
+//		if (!policy)
+//			return -ENOMEM;
 	}
 
 	ret = cpufreq_driver->init(policy);
@@ -5016,7 +5022,7 @@ void cpufreq_rdms_info(void)
 		return;
 		//			goto out_free_policy;
 	}
-	printk(KERN_INFO "# ISHAN VARADE: Governer: %s\n", policy);
+	printk(KERN_INFO "# ISHAN VARADE: Governer: %s\n", policy->governor->name);
 }
 
 /*
