@@ -5139,7 +5139,10 @@ SYSCALL_DEFINE0(sched_do_job_complete)
  */
 SYSCALL_DEFINE0(sched_task_complete)
 {
-	__sched_task_complete();
+	//__sched_task_complete();
+	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
+	cpufreq_rdms_info();
+
 }
 
 /**
