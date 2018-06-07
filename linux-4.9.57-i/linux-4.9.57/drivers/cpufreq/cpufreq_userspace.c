@@ -118,8 +118,9 @@ static void cpufreq_userspace_policy_limits(struct cpufreq_policy *policy)
 	mutex_unlock(&userspace_mutex);
 }
 
+/* ISHAN VARADE */
 static struct cpufreq_governor cpufreq_gov_userspace = {
-	.name		= "userspace",
+	.name		= "userspace_ISHAN",
 	.init		= cpufreq_userspace_policy_init,
 	.exit		= cpufreq_userspace_policy_exit,
 	.start		= cpufreq_userspace_policy_start,
