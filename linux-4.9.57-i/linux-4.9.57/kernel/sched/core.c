@@ -4981,61 +4981,20 @@ static u32 cpu_freq_read_intel(void)
 	printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, CPU_FREQ_READ_INTEL: %lu\n", cpu, val);
 	return val;
 }
-/*
- * ISHAN VARADE
- */
-static DEFINE_PER_CPU(struct cpufreq_policy *, cpufreq_cpu_data);
+
 /*
  * ISHAN VARADE:
  */
-void cpufreq_rdmsr_info(void)
+void cpufreq_set(unsigned int freq)
 {
-	/*
-	u32 high, low;
-	rdmsr(MSR_IA32_PERF_CTL, low, high);
-	 */
-
-	struct cpufreq_policy *policy;
-	struct cpufreq_driver *cpufreq_driver;
-	int ret;
-
+	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
 	int cpu = get_cpu();
-
-	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdmsr starting Governor:%d\n", cpu);//, cpufreq_cpu_data->governor->name);
-
-	/*
-	 * cpufreq.c from cpufreq_online()
-	 */
-	policy = per_cpu(cpufreq_cpu_data, cpu);
+	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
 	if (policy)
 	{
-		//		WARN_ON(!cpumask_test_cpu(cpu, policy->related_cpus));
-		//		if (!policy_is_inactive(policy))
-		//			return cpufreq_add_policy_cpu(policy, cpu);
-
-		/* This is the only online CPU for the policy.  Start over. */
-		//		new_policy = false;
-		//		down_write(&policy->rwsem);
-		//		policy->cpu = cpu;
-		//		policy->governor = NULL;
-		//		up_write(&policy->rwsem);
+		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n", cpu, policy->governor->name);
+		policy->governor->store_setspeed(policy, freq)
 	}
-	else
-	{
-		//		new_policy = true;
-//		policy = cpufreq_policy_alloc(cpu);
-//		if (!policy)
-//			return -ENOMEM;
-	}
-
-	ret = cpufreq_driver->init(policy);
-	if (ret)
-	{
-		printk(KERN_ERR "# ISHAN VARADE: initialization failed\n");
-		return;
-		//			goto out_free_policy;
-	}
-	printk(KERN_INFO "# ISHAN VARADE: Governer: %s\n", policy->governor->name);
 }
 
 /*
@@ -5155,16 +5114,6 @@ SYSCALL_DEFINE0(sched_task_complete)
 	// Important
 	//__sched_task_complete();
 
-
-	//Delete
-	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
-
-	int cpu = get_cpu();
-	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
-	if (policy)
-	{
-		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n", cpu, policy->governor->name);
-	}
 //	cpufreq_rdmsr_info();
 //	cpu_freq_read_intel();
 }
