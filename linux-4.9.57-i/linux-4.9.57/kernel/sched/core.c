@@ -4987,14 +4987,19 @@ static u32 cpu_freq_read_intel(void)
  */
 void cpufreq_set(unsigned int freq)
 {
+	char *buf_freq;
 	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
 	int cpu = get_cpu();
 	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
 	if (policy)
 	{
 		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n", cpu, policy->governor->name);
-		policy->governor->store_setspeed(policy, freq)
+//		policy->governor->store_setspeed(policy, freq);
+		policy->governor->show_setspeed(policy, buf_freq);
+		printk(KERN_INFO "#ISHAN VARADE: BUF_FREQ: %s.\n", buf_freq);
+		return;
 	}
+	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
 }
 
 /*
