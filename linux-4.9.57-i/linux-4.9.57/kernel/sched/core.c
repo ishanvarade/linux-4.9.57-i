@@ -4995,8 +4995,10 @@ void cpufreq_set(unsigned int freq)
 	{
 		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n", cpu, policy->governor->name);
 //		policy->governor->store_setspeed(policy, freq);
-		policy->governor->show_setspeed(policy, buf_freq);
-		printk(KERN_INFO "#ISHAN VARADE: BUF_FREQ: %s.\n", buf_freq);
+		//policy->governor->show_setspeed(policy, buf_freq);
+		//printk(KERN_INFO "#ISHAN VARADE: BUF_FREQ: %s.\n", buf_freq);
+
+		cpufreq_set_frequency(cpu, 1900000); // 1.9GHz
 		return;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
