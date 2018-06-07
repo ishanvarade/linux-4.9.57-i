@@ -5121,6 +5121,7 @@ SYSCALL_DEFINE0(sched_task_complete)
 
 //	cpufreq_rdmsr_info();
 //	cpu_freq_read_intel();
+	cpufreq_set(123);
 }
 
 /**
