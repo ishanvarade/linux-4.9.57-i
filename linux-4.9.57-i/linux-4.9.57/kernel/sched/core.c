@@ -5093,7 +5093,7 @@ SYSCALL_DEFINE0(sched_task_complete)
  * ISHAN VARADE
  * sched_dummy_call systemcall
  */
-SYSCALL_DEFINE2(sched_dummy_call, unsigned int target_freq, unsigned int relation)
+SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relation)
 {
 	printk (KERN_INFO "# ISHAN VARADE: DUMMY SYSTEM CALL CALLED.\n");
 	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
