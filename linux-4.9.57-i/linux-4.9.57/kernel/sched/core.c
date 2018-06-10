@@ -4970,6 +4970,10 @@ static void __sched_task_complete(void)
 	destroy_hrtimer_on_stack(&task->timer);
 }
 
+/* ISHAN VARADE */
+/*
+ *
+ */
 static u32 cpu_freq_read_intel(void)
 {
 	u32 val, dummy;
@@ -5000,40 +5004,6 @@ void cpufreq_set(unsigned int freq)
 		return;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
-}
-
-/*
- * ISHAN VARADE: FOR DELETE
- */
-static int
-do_sched_release_init_DELETE(void)
-{
-	/*printk(KERN_ERR "ISHAN VARADE: do_sched_release_init_DELETE: STARTED\n");
-	struct hrtimer *timer;
-
-
-	struct timespec tu;
-	tu.tv_sec = 2; // 2 sec
-	ktime_t delta = ktime_set(0, 0);
-	hrtimer_init_on_stack(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	hrtimer_set_expires_range_ns(timer, timespec_to_ktime(tu), 0);
-
-	timer->function = restart_hrtimer_callback;
-	hrtimer_start_expires(timer, HRTIMER_MODE_REL);
-	printk(KERN_ERR "ISHAN VARADE: do_sched_release_init_DELETE: END\n");
-	return 0;*/
-
-	ktime_t kt;
-	kt = ktime_set(5, 0);
-	struct hrtimer timer;
-	hrtimer_init(&timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
-	//hrtimer_rebase(&timer, CLOCK_MONOTONIC);
-	timer.function = restart_hrtimer_callback;
-
-	hrtimer_start(&timer, kt, HRTIMER_MODE_REL);
-	//
-	return 0;
-
 }
 
 /**
@@ -5116,12 +5086,39 @@ SYSCALL_DEFINE0(sched_do_job_complete)
  */
 SYSCALL_DEFINE0(sched_task_complete)
 {
-	// Important
-	//__sched_task_complete();
+	__sched_task_complete();
+}
 
-//	cpufreq_rdmsr_info();
-//	cpu_freq_read_intel();
-	cpufreq_set(123);
+/*
+ * ISHAN VARADE
+ * sched_dummy_call systemcall
+ */
+SYSCALL_DEFINE2(sched_dummy_call, unsigned int target_freq, unsigned int relation)
+{
+	printk (KERN_INFO "# ISHAN VARADE: DUMMY SYSTEM CALL CALLED.\n");
+	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
+	int cpu = get_cpu();
+	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
+	if (policy)
+	{
+		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n",
+				cpu, policy->governor->name);
+
+		printk(KERN_INFO "#ISHAN VARADE: Target Frequency: %u, Relation: %u.\n",
+				target_freq, relation);
+		__cpufreq_driver_target(policy, target_freq, relation);
+		return;
+	}
+	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
+
+
+	//	cpufreq_rdmsr_info();
+	//	cpu_freq_read_intel();
+//	cpufreq_set(123);
+
+	/*
+	 *
+	 */
 }
 
 /**

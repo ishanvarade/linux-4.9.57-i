@@ -1941,7 +1941,14 @@ int __cpufreq_driver_target(struct cpufreq_policy *policy,
 	if (!cpufreq_driver->target_index)
 		return -EINVAL;
 
+
+	/* ISHAN VARADE */
+	printk(KERN_INFO "This shows that target==NULL and target_index!=NULL.\n");
+
 	index = cpufreq_frequency_table_target(policy, target_freq, relation);
+
+	/* ISHAN VARADE */
+	printk(KERN_INFO "The index for the frequency %d: %u\n", index, target_freq);
 
 	return __target_index(policy, index);
 }

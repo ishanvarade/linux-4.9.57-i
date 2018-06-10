@@ -342,6 +342,7 @@
 333 common sched_do_job_release		sys_sched_do_job_release
 334 common sched_do_job_complete	sys_sched_do_job_complete
 335 common sched_task_complete		sys_sched_task_complete
+336 common sched_dummy_call			sys_sched_dummy_call
 
 #
 # x32-specific system call numbers start at 512 to avoid cache impact

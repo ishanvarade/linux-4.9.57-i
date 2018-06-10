@@ -31,8 +31,6 @@ static DEFINE_MUTEX(userspace_mutex);
  */
 static int cpufreq_set(struct cpufreq_policy *policy, unsigned int freq)
 {
-	/* ISHAN VARADE */
-	printk(KERN_INFO "# ISHAN VARADE: cpufreq_set of cpufreq_userspace called.\n");
 	int ret = -EINVAL;
 	unsigned int *setspeed = policy->governor_data;
 

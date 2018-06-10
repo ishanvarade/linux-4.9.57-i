@@ -293,6 +293,7 @@ __syscall_meta_##sname = {				\
 								unsigned int len, unsigned long __user * user_mask_ptr);
 						asmlinkage long sched_do_job_complete(void);
 						asmlinkage long sched_task_complete(void);
+						asmlinkage long sched_dummy_call(unsigned int target_freq, unsigned int relation);
 						asmlinkage long sys_sched_setparam(pid_t pid,
 								struct sched_param __user *param);
 						asmlinkage long sys_sched_setattr(pid_t pid,
