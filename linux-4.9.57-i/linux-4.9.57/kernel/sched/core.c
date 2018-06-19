@@ -5028,9 +5028,24 @@ SYSCALL_DEFINE3(sched_setscheduler, pid_t, pid, int, policy,
  * ISHAN VARADE
  * May be I change to simple input like WCET and DEADLINE
  */
-SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uattr)/*ishan*/
+//SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uattr)/*ishan*/
+SYACALL_DEFINE(sched_setparam_real, pid_t, pid, u64, sched_runtime,
+		u64, sched_soft_deadline, u64, sched_deadline, u64, sched_period)
 {
-	struct sched_attr attr;
+	/* SCHED_DEADLINE */
+	/*
+		u64 sched_runtime;
+		u64 sched_soft_deadline;
+		u64 sched_deadline;
+		u64 sched_period;*/
+
+	struct sched_attr attr = {
+			.sched_policy = SCHED_DEADLINE,
+			.sched_runtime = sched_runtime,
+			.sched_soft_deadline = sched_soft_deadline,
+			.sched_deadline = sched_deadline,
+			.sched_deadline = sched_period
+	};
 	struct task_struct *p;
 	int retval;
 
@@ -5038,10 +5053,10 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real systemcall callesched_setparam_reald\n");
 	printk(KERN_INFO "# ISHAN VARADE: 2. do_sched_setscheduler2  called\n");
 
-	if (!uattr || pid < 0)// flags?
-		return -EINVAL;
+	//if (!uattr || pid < 0)// flags?
+		// return -EINVAL;
 
-	retval = sched_copy_attr(uattr, &attr);
+//	retval = sched_copy_attr(uattr, &attr);
 	printk(KERN_INFO "# ISHAN VARADE: 2.attr: policy: %d\n", attr.sched_policy);
 	if (retval)
 		return retval;

@@ -122,6 +122,7 @@ struct sched_attr {
 
 	/* SCHED_DEADLINE */
 	u64 sched_runtime;
+	u64 sched_soft_deadline; /* ISHAN VARADE */
 	u64 sched_deadline;
 	u64 sched_period;
 };
