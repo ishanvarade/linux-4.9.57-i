@@ -5060,7 +5060,11 @@ SYSCALL_DEFINE5(sched_setparam_real, pid_t, pid, u64, sched_runtime,
 		return -EINVAL;
 
 //	retval = sched_copy_attr(uattr, &attr);
+	/* ISHAN VARADE *
+	 * just test and remove not a part of the project.
+	 */
 	printk(KERN_INFO "# ISHAN VARADE: 2.attr: policy: %d\n", attr.sched_policy);
+	printk(KERN_INFO "# ISHAN VARADE: Argument \nPolicy: %d\n, Runtime: %llu\n, Deadline: %llu\n", SCHED_DEADLINE, sched_runtime, sched_deadline);
 	if (retval)
 		return retval;
 
