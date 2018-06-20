@@ -5056,6 +5056,9 @@ SYSCALL_DEFINE5(sched_setparam_real, pid_t, pid, u64, sched_runtime,
 	//if (!uattr || pid < 0)// flags?
 		// return -EINVAL;
 
+	if (pid < 0)
+		return -EINVAL;
+
 //	retval = sched_copy_attr(uattr, &attr);
 	printk(KERN_INFO "# ISHAN VARADE: 2.attr: policy: %d\n", attr.sched_policy);
 	if (retval)
