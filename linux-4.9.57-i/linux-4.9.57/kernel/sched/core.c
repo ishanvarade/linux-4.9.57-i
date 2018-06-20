@@ -5029,7 +5029,7 @@ SYSCALL_DEFINE3(sched_setscheduler, pid_t, pid, int, policy,
  * May be I change to simple input like WCET and DEADLINE
  */
 //SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uattr)/*ishan*/
-SYACALL_DEFINE5(sched_setparam_real, pid_t, pid, u64, sched_runtime,
+SYSCALL_DEFINE5(sched_setparam_real, pid_t, pid, u64, sched_runtime,
 		u64, sched_soft_deadline, u64, sched_deadline, u64, sched_period)
 {
 	/* SCHED_DEADLINE */
