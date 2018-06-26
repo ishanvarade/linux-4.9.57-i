@@ -5035,7 +5035,7 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 	int retval;
 
 	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
-	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real systemcall callesched_setparam_real.\n");
+	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real() systemcall callesched_setparam_real.\n");
 
 	if (!uattr || pid < 0)// flags?
 		return -EINVAL;
