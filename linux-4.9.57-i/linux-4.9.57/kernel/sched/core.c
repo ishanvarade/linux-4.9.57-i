@@ -5028,24 +5028,9 @@ SYSCALL_DEFINE3(sched_setscheduler, pid_t, pid, int, policy,
  * ISHAN VARADE
  * May be I change to simple input like WCET and DEADLINE
  */
-//SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uattr)/*ishan*/
-SYSCALL_DEFINE5(sched_setparam_real, pid_t, pid, u64, sched_runtime,
-		u64, sched_soft_deadline, u64, sched_deadline, u64, sched_period)
+SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uattr)/*ishan*/
 {
-	/* SCHED_DEADLINE */
-	/*
-		u64 sched_runtime;
-		u64 sched_soft_deadline;
-		u64 sched_deadline;
-		u64 sched_period;*/
-
-	struct sched_attr attr = {
-			.sched_policy = SCHED_DEADLINE,
-			.sched_runtime = sched_runtime,
-			.sched_soft_deadline = sched_soft_deadline,
-			.sched_deadline = sched_deadline,
-			.sched_deadline = sched_period
-	};
+	struct sched_attr attr;
 	struct task_struct *p;
 	int retval;
 
@@ -5053,18 +5038,11 @@ SYSCALL_DEFINE5(sched_setparam_real, pid_t, pid, u64, sched_runtime,
 	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real systemcall callesched_setparam_reald\n");
 	printk(KERN_INFO "# ISHAN VARADE: 2. do_sched_setscheduler2  called\n");
 
-	//if (!uattr || pid < 0)// flags?
-		// return -EINVAL;
-
-	if (pid < 0)
+	if (!uattr || pid < 0)// flags?
 		return -EINVAL;
 
-//	retval = sched_copy_attr(uattr, &attr);
-	/* ISHAN VARADE *
-	 * just test and remove not a part of the project.
-	 */
+	retval = sched_copy_attr(uattr, &attr);
 	printk(KERN_INFO "# ISHAN VARADE: 2.attr: policy: %d\n", attr.sched_policy);
-	printk(KERN_INFO "# ISHAN VARADE: Argument \nPolicy: %d\n, Runtime: %llu\n, Deadline: %llu\n", SCHED_DEADLINE, sched_runtime, sched_deadline);
 	if (retval)
 		return retval;
 
@@ -5078,6 +5056,12 @@ SYSCALL_DEFINE5(sched_setparam_real, pid_t, pid, u64, sched_runtime,
 		retval = sched_setscheduler2(p, &attr);
 	//retval = sched_setattr(p, &attr);
 	rcu_read_unlock();
+
+	if (p)
+	{
+		printk(KERN_INFO "# ISHAN VARADE: P -> DL -> DL_RUNTIME: %llu.\n", p->dl.dl_runtime);
+		printk(KERN_INFO "# ISHAN VARADE: P -> DL -> dl_deadline: %llu.\n", p->dl.dl_deadline);
+	}
 
 	return retval;
 }

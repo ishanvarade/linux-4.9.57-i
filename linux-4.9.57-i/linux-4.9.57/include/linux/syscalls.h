@@ -287,8 +287,7 @@ __syscall_meta_##sname = {				\
 						asmlinkage long sys_nice(int increment);
 						asmlinkage long sys_sched_setscheduler(pid_t pid, int policy,
 								struct sched_param __user *param);
-						asmlinkage long sys_sched_setparam_real(pid_t  pid, u64 sched_runtime,
-								u64 sched_soft_deadline, u64 sched_deadline, u64 sched_period);
+						asmlinkage long sys_sched_setparam_real(pid_t  pid, struct sched_attr __user * uattr);
 						asmlinkage long sys_sched_do_job_release(pid_t pid, struct timespec __user* rqtp,
 								unsigned int len, unsigned long __user * user_mask_ptr);
 						asmlinkage long sched_do_job_complete(void);
