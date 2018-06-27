@@ -4875,7 +4875,7 @@ void sched_set_restart_timer(struct task_struct *task, struct hrtimer *timer, st
 
 /* ISHAN VARADE */
 /*
- * This function serving two purposes.
+ * This function serves two purposes.
  * First: Set affinity of the task.
  * Second: Set release timer.
  */
@@ -4903,14 +4903,15 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 
 	retval = get_user_cpu_mask(user_mask_ptr, len, new_mask);
 	if(!retval) //(retval == 0)
+	{
 		sched_setaffinity(pid, new_mask);
+	}
 	else
 	{
 		printk(KERN_ERR "ISHAN VARADE: do_sched_release_init() affinity may not be set");
 		return retval;
 	}
 	free_cpumask_var(new_mask);
-
 
 	/*
 	 * Set timer
