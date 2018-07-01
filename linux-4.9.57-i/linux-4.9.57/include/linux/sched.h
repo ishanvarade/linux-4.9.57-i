@@ -2004,8 +2004,8 @@ struct task_struct {
 	atomic_t stack_refcount;
 #endif
 
-	// ISHAN VARADE
-		struct hrtimer timer;
+	/* ISHAN VARADE */
+	struct hrtimer timer;
 
 
 /* CPU-specific state of this task */

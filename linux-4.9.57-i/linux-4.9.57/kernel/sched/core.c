@@ -3964,6 +3964,7 @@ __setparam_dl(struct task_struct *p, const struct sched_attr *attr)
 	dl_se->first_instance = 1;
 	dl_se->gflag = 0;
 	dl_se->enqueue_time_flag = 0;
+	dl_se->ktime_last = ktime_set(0,0);
 
 	/*
 	 * Changing the parameters of a task is 'tricky' and we're not doing
@@ -4835,7 +4836,7 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	}
 	//struct sched_dl_entity *dl_se = &task->dl;
 	int cpu = smp_processor_id();
-	long period_ns = dl_se->dl_deadline * 1000 ;
+	long period_ns = dl_se->dl_deadline * 1000 ; // dl_period
 	int ret_overrun;
 	long long actual_delay = 0;
 	ktime_t kt_now, delay, ktime_zero, enq_ktime_end, enq_ktime_delay, enq_ktime;
@@ -4866,7 +4867,9 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 /*
  * ISHAN VARADE
  */
-void sched_set_restart_timer(struct task_struct *task, struct hrtimer *timer, struct timespec *rqtp){
+void sched_set_restart_timer(struct task_struct *task, struct hrtimer *timer,
+		struct timespec *rqtp)
+{
 	hrtimer_init_on_stack(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	hrtimer_set_expires_range_ns(timer, timespec_to_ktime(*rqtp), 0);
 	timer->function = restart_hrtimer_callback;
