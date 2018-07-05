@@ -3400,9 +3400,9 @@ static void __sched notrace __schedule(bool preempt)
 					sched_dl_entity->move_to_global = true;
 					sched_dl_entity->task_in_temp = true;
 					rq->task_in_temp = true;
+
 					/* IPI */
-					smp_call_function_single(SCHED_SERVICE_CORE,
-							service_ipi_handler, NULL, 0);
+					smp_call_function_single(SCHED_SERVICE_CORE, service_ipi_handler, NULL, 0);
 
 					/* Time calculation */
 					ktime_end = ktime_get();
@@ -4401,11 +4401,11 @@ int sched_setscheduler(struct task_struct *p, int policy,
 /* ISHAN VARADE */
 /*
  * global_to_ready: Thread call if a task is ready to move from global release queue to ready queue.
+ * global_to_ready thread call when
  */
 int global_to_ready(void * unused)
 {
 	/* The core '0' has choosen as Service Core. */
-	//const int SERVICE_CORE = 0;
 	struct rq *rq = cpu_rq(SCHED_SERVICE_CORE);
 	struct dl_relq *dl_relq = &rq->relq;	// Global Release Queue
 	unsigned long flags;
@@ -4439,10 +4439,10 @@ int global_to_ready(void * unused)
 			{
 				/*
 				 * task: Find the task from the left node.
-				 * If the gflag (flag local to the task for release timer expire)
-				 * is set, this means that task is ready to execute.
-				 * The task dequeue from the global release queue. Set gflag and
-				 * move_to_global flag to 0(zero).
+				 * If the gflag (gflag local to the task for release timer expire)
+				 * of the task is set, this means that task is ready to execute.
+				 * The task dequeue from the global release queue.
+				 * Set gflag and move_to_global flag to 0(zero).
 				 * Wake_up_process() move the task to ready queue.
 				 */
 				task = container_of(sched_dl_entity, struct task_struct, dl);
@@ -4480,7 +4480,7 @@ int global_to_ready(void * unused)
 		while (1 == timerexpired);
 	}
 
-	set_current_state(TASK_INTERRUPTIBLE);
+	set_current_state(TASK_INTERRUPTIBLE);    // Need to move inside while
 	schedule();			// Search: asmlinkage __visible void __sched schedule(void)
 	__set_current_state(TASK_RUNNING);
 
@@ -4499,13 +4499,12 @@ int temp_to_global(void * unused)
 	else
 		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
 				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
-	struct rq *global_rq = cpu_rq(SCHED_SERVICE_CORE);
 
+	struct rq *global_rq = cpu_rq(SCHED_SERVICE_CORE);
 	struct sched_dl_entity *sched_dl_entity;
 	struct task_struct  *task;
 	struct rq *rq;
 	struct rb_node *next_node;
-
 	int i;
 	while (true)
 	{
@@ -4535,8 +4534,7 @@ int temp_to_global(void * unused)
 					sched_dl_entity->deq_end = ktime_get();
 					if (sched_dl_entity->enqueue_time_flag)
 					{
-						ktime_t deq_time = ktime_sub(sched_dl_entity->deq_end,
-								sched_dl_entity->deq_start);
+						ktime_t deq_time = ktime_sub(sched_dl_entity->deq_end, sched_dl_entity->deq_start);
 						sched_dl_entity->enqueue_time_flag = false;
 						printk(KERN_INFO "# ISHAN VARADE: Elapsed time from IPI "
 								"till finished the temp_to_global thread move the "
@@ -4585,10 +4583,10 @@ int sched_setscheduler2(struct task_struct *p, const struct sched_attr *attr)
 	int i;
 	struct rq *rq;
 
-	printk(KERN_INFO "# ISHAN VARADE: 3. sched_setscheduler2  called\n");
+	printk(KERN_INFO "# ISHAN VARADE: 3. sched_setscheduler2()  called\n");
 	if(false == create_servicethread_flag)
 	{
-		printk(KERN_INFO "# ISHAN VARADE: 3. Only One time  called\n");
+		printk(KERN_INFO "# ISHAN VARADE: 3. sched_setscheduler2(): Creating Threads \n");
 		create_servicethread_flag = true;
 		dequeue_service_thread = kthread_rt_create(global_to_ready, NULL, "Global_to_ready_thread");
 		kthread_bind(dequeue_service_thread, SCHED_SERVICE_CORE);
@@ -4872,7 +4870,7 @@ void sched_set_restart_timer(struct task_struct *task, struct hrtimer *timer,
 {
 	hrtimer_init_on_stack(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	hrtimer_set_expires_range_ns(timer, timespec_to_ktime(*rqtp), 0);
-	timer->function = restart_hrtimer_callback;
+	timer->function = &restart_hrtimer_callback;
 	hrtimer_start_expires(timer, HRTIMER_MODE_REL);
 }
 

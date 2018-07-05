@@ -304,6 +304,9 @@ static struct task_struct *__kthread_create_on_node(int (*threadfn)(void *data),
 }
 
 /* ISHAN VARADE */
+/*
+ * Real_Time Kernel Thread Created.
+ */
 static struct task_struct *__kthread_rt_create_on_node(int (*threadfn)(void *data),
 						    void *data, int node,
 						    const char namefmt[],
