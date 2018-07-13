@@ -4971,12 +4971,12 @@ static void __sched_do_job_complete(void)
 			sched_dl_entity->enqueue_ready_start);
 	unsigned long long delay_ns = ktime_to_ns(delay);
 	unsigned long long deadline_ns = sched_dl_entity->dl_deadline * 1000;
-	int cpu = get_cpu();
+//	int cpu = get_cpu();
 	struct cpufreq_policy *policy;
 	if (delay_ns > deadline_ns)
 	{
-		policy = cpufreq_cpu_get_raw(cpu);
-		cpufreq_driver_target_next_frequency(policy, relation)
+	//	policy = cpufreq_cpu_get_raw(cpu);
+		//cpufreq_driver_target_next_frequency(policy, relation);
 	}
 
 
@@ -5141,7 +5141,7 @@ SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relat
 		printk(KERN_INFO "#ISHAN VARADE: Target Frequency: %u, Relation: %u.\n",
 				target_freq, relation);
 //		__cpufreq_driver_target(policy, target_freq, relation);
-		cpufreq_driver_target_next_frequency(policy, relation);
+//		cpufreq_driver_target_next_frequency(policy, relation);
 		return;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
