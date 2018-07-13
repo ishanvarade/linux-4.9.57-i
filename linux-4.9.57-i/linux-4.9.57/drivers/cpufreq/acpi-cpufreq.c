@@ -414,6 +414,9 @@ static unsigned int check_freqs(struct cpufreq_policy *policy,
 static int acpi_cpufreq_target(struct cpufreq_policy *policy,
 			       unsigned int index)
 {
+	/* ISHAN VARADE */
+	printk(KERN_INFO "# ISHAN VARADE: drivers,cpufreq,acpi-cpufreq.c,acpi_cpufreq_target() hit. "
+			"Policy: %s.\n", policy->governor->name);
 	struct acpi_cpufreq_data *data = policy->driver_data;
 	struct acpi_processor_performance *perf;
 	const struct cpumask *mask;

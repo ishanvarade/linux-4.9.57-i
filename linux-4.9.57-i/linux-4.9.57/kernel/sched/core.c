@@ -3304,6 +3304,7 @@ pick_next_task(struct rq *rq, struct task_struct *prev, struct pin_cookie cookie
 	BUG(); /* the idle class will always have a runnable task */
 }
 
+/* ISHAN VARADE :schedule()*/
 /*
  * __schedule() is the main scheduler function.
  *
@@ -3395,24 +3396,24 @@ static void __sched notrace __schedule(bool preempt)
 				struct sched_dl_entity *sched_dl_entity = &prev->dl;
 				if (sched_dl_entity->move_to_temp)
 				{
-					enqueue_relq_dl_task(rq, prev);
+					enqueue_relq_dl_task(rq, prev); // need to lock rq
 					sched_dl_entity->move_to_temp = false;
 					sched_dl_entity->move_to_global = true;
 					sched_dl_entity->task_in_temp = true;
 					rq->task_in_temp = true;
 
-					/* IPI */
+					/* IPI to wake temp_to_global thread*/
 					smp_call_function_single(SCHED_SERVICE_CORE, service_ipi_handler, NULL, 0);
 
 					/* Time calculation */
 					ktime_end = ktime_get();
 					ktime = ktime_sub(ktime_end, ktime_start);
-					printk(KERN_INFO "#ISHAN VARADE: Time take for execution of "
+					printk(KERN_INFO "#ISHAN VARADE: __ schedule() Time take for execution of "
 							"sched_do_job_complete: %lld\n", ktime_to_ns(ktime));
 
 					/* Time calculation till temp_to_global thread finished */
 					sched_dl_entity->deq_start = ktime_get();
-					sched_dl_entity->enqueue_time_flag = true;
+					sched_dl_entity->enqueue_time_flag = true; // This can be move above smp_call_function_single(SCHED_SERVICE_CORE, service_ipi_handler, NULL, 0);
 				}
 			}
 			/*
@@ -4506,6 +4507,7 @@ int temp_to_global(void * unused)
 	struct rq *rq;
 	struct rb_node *next_node;
 	int i;
+
 	while (true)
 	{
 		for_each_possible_cpu(i)
@@ -4514,7 +4516,7 @@ int temp_to_global(void * unused)
 			next_node = rq->relq.rb_leftmost;
 			if (next_node != NULL)
 			{
-				if (rq->task_in_temp)
+				if (rq->task_in_temp)   //while() loop in future
 				{
 					sched_dl_entity = rb_entry(next_node, struct sched_dl_entity, rb_node);
 					task = container_of(sched_dl_entity, struct task_struct, dl);
@@ -4522,6 +4524,7 @@ int temp_to_global(void * unused)
 					__acquire(rq->lock);
 					dequeue_relq_dl_task(rq, task);
 					sched_dl_entity->task_in_temp = false;
+					/*rq->task_in_temp = false; *//* Edited: should work */
 					__release(rq->lock);
 
 					if (sched_dl_entity->move_to_global)
@@ -4534,7 +4537,8 @@ int temp_to_global(void * unused)
 					sched_dl_entity->deq_end = ktime_get();
 					if (sched_dl_entity->enqueue_time_flag)
 					{
-						ktime_t deq_time = ktime_sub(sched_dl_entity->deq_end, sched_dl_entity->deq_start);
+						ktime_t deq_time = ktime_sub(sched_dl_entity->deq_end,
+								sched_dl_entity->deq_start);
 						sched_dl_entity->enqueue_time_flag = false;
 						printk(KERN_INFO "# ISHAN VARADE: Elapsed time from IPI "
 								"till finished the temp_to_global thread move the "
@@ -4822,6 +4826,7 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
  */
 static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 {
+	printk(KERN_ERR "ISHAN VARADE: restart_hrtimer_callback(): Started.\n");
 	ktime_t enq_ktime_start = ktime_get();
 	struct task_struct *task = container_of(timer, struct task_struct, timer);
 	struct sched_dl_entity *dl_se = &task->dl;
@@ -4839,6 +4844,7 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	long long actual_delay = 0;
 	ktime_t kt_now, delay, ktime_zero, enq_ktime_end, enq_ktime_delay, enq_ktime;
 	ktime_zero = ktime_set(0,0);
+
 	if(!ktime_equal(dl_se->ktime_last, ktime_zero))
 	{
 		dl_se->ktime_now = ktime_get();
@@ -4857,8 +4863,9 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 
 	printk(KERN_INFO "ISHAN VARADE: Timer restarted in CPU %d\n", cpu);
 	dl_se->enq_start = ktime_get();
+	dl_se->enqueue_ready_start = ktime_get();
 	wshp_release(timer, task);
-
+	printk(KERN_ERR "ISHAN VARADE: restart_hrtimer_callback(): Ended.\n");
 	return HRTIMER_RESTART;
 }
 
@@ -4889,8 +4896,8 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 	cpumask_var_t new_mask;
 	int retval = 0;
 	// undo retval = 0;
-	if(copy_from_user(&tu, rqtp, sizeof(tu)))
-		return -EFAULT;
+//	if(copy_from_user(&tu, rqtp, sizeof(tu)))
+//		return -EFAULT;
 	if (!timespec_valid(&tu))
 		return -EINVAL;
 	p = find_process_by_pid(pid);
@@ -4934,6 +4941,7 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 
 	p = find_process_by_pid(pid);
 
+	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init(): TU = %lld.%.91d\n", (long long)tu.tv_sec, tu.tv_nsec);
 	sched_set_restart_timer(p, &p->timer, &tu);
 
 	return retval;
@@ -4948,11 +4956,30 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
  */
 static void __sched_do_job_complete(void)
 {
+	printk(KERN_INFO "# ISHAN VARADE: __sched_do_job_complete(): \n");
 	int cpu = smp_processor_id();
 	struct rq *rq = cpu_rq(cpu);
 	struct task_struct *task = rq->curr;
 	struct sched_dl_entity *sched_dl_entity = &task->dl; // IMPORTANT: where is updating task->dl???????/
 	sched_dl_entity->move_to_temp = 1;
+
+	/* If execution  finish after soft-deadline
+	 * Than jump to next frequency to increase execution speed.
+	 */
+	sched_dl_entity->dequeue_ready_queue = ktime_get();
+	ktime_t delay = ktime_sub(sched_dl_entity->dequeue_ready_queue,
+			sched_dl_entity->enqueue_ready_start);
+	unsigned long long delay_ns = ktime_to_ns(delay);
+	unsigned long long deadline_ns = sched_dl_entity->dl_deadline * 1000;
+	int cpu = get_cpu();
+	struct cpufreq_policy *policy;
+	if (delay_ns > deadline_ns)
+	{
+		policy = cpufreq_cpu_get_raw(cpu);
+		cpufreq_driver_target_next_frequency(policy, relation)
+	}
+
+
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule();
 	__set_current_state(TASK_RUNNING);
@@ -5113,7 +5140,8 @@ SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relat
 
 		printk(KERN_INFO "#ISHAN VARADE: Target Frequency: %u, Relation: %u.\n",
 				target_freq, relation);
-		__cpufreq_driver_target(policy, target_freq, relation);
+//		__cpufreq_driver_target(policy, target_freq, relation);
+		cpufreq_driver_target_next_frequency(policy, relation);
 		return;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");

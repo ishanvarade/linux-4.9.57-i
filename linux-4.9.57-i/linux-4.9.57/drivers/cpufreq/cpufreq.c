@@ -1970,6 +1970,63 @@ int cpufreq_driver_target(struct cpufreq_policy *policy,
 }
 EXPORT_SYMBOL_GPL(cpufreq_driver_target);
 
+/* ISHAN VARADE */
+/*
+ * cpufreq_deriver_target_next_frequency use to change the cpu frequency to next
+ * value value from the frequency table.
+ */
+int cpufreq_driver_target_next_frequency(struct cpufreq_policy *policy,	unsigned int relation)
+{
+	printk(KERN_INFO "# ISHAN VARADE: cpufreq_driver_increase_frequenc() ");
+	unsigned int old_target_freq;//= target_freq;
+	int index;
+
+	if (cpufreq_disabled())
+		return -ENODEV;
+
+	/* Make sure that target_freq is within supported range */
+//	target_freq = clamp_val(target_freq, policy->min, policy->max);
+
+//	pr_debug("target for CPU %u: %u kHz, relation %u, requested %u kHz\n",
+//			policy->cpu, target_freq, relation, old_target_freq);
+
+	/*
+	 * This might look like a redundant call as we are checking it again
+	 * after finding index. But it is left intentionally for cases where
+	 * exactly same freq is called again and so we can save on few function
+	 * calls.
+	 */
+	if (policy->max == policy->cur)
+	{
+		printk(KERN_INFO "# ISHAN VARADE: frequency reached to maximum %u.", policy->cur);
+		return 0;
+	}
+	/* To know the index of the max frequency of the policy */
+	//index = cpufreq_frequency_table_target(policy, policy->max, relation);
+
+	/* Save last value to restore later on errors */
+	policy->restore_freq = policy->cur;
+
+//	if (cpufreq_driver->target)
+//		return cpufreq_driver->target(policy, target_freq, relation);
+
+	if (!cpufreq_driver->target_index)
+		return -EINVAL;
+
+
+	/* ISHAN VARADE */
+	printk(KERN_INFO "This shows that target==NULL and target_index!=NULL.\n");
+
+	index = cpufreq_frequency_table_target(policy, policy->cur, relation);
+
+	/* ISHAN VARADE */
+	printk(KERN_INFO "# ISHAN VARADE: Old index# %d:  and frequency: %u.\n", index, policy->cur);
+	++index;
+
+	return __target_index(policy, index);
+}
+EXPORT_SYMBOL_GPL(cpufreq_driver_target_next_frequency);
+
 __weak struct cpufreq_governor *cpufreq_fallback_governor(void)
 {
 	return NULL;

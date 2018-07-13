@@ -1449,7 +1449,7 @@ struct sched_dl_entity {
 	 * ISHAN VARADE
 	 * INITIALIZATION is required: at
 	 */
-	bool move_to_temp;	//int move_to_temp;	// Set when task finished its job in the current cycle and now ready to move to temporarily release queue.
+	bool move_to_temp;	//int move_to_temp;	// Set true when task finished its job in the current cycle and now ready to move to temporarily release queue.
 	bool move_to_global;	//int move_to_global; // Need to see where is this changing
 	bool task_in_temp;	//int task_in_temp;
 	int first_instance;
@@ -1476,6 +1476,9 @@ struct sched_dl_entity {
 	ktime_t enq_start;	// Time noted when rt-time task released.
 	ktime_t enq_end;	// Time noted after waking up the rt-task to move in ready queue.
 	ktime_t deq_start, deq_end;
+
+	/* ISHAN VARADE */
+	ktime_t enqueue_ready_start, dequeue_ready_queue; // To calculate the time from task's release to move to complete its task.
 };
 
 union rcu_special {
