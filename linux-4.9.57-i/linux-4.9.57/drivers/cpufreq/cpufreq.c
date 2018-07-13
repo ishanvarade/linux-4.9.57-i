@@ -1973,7 +1973,7 @@ EXPORT_SYMBOL_GPL(cpufreq_driver_target);
 /* ISHAN VARADE */
 /*
  * cpufreq_deriver_target_next_frequency use to change the cpu frequency to next
- * value value from the frequency table.
+ * value value from the frequency table..
  */
 int cpufreq_driver_target_next_frequency(struct cpufreq_policy *policy,	unsigned int relation)
 {
