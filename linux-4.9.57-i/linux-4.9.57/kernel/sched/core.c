@@ -4952,7 +4952,7 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
  * This function called by sched_do_job_complete system call. When a task finish
  * its job for the cycle than it call this system call.
  * This system call move move the task to the temporarily release queue of the
- * executing queue....
+ * executing queue.
  */
 static void __sched_do_job_complete(void)
 {
