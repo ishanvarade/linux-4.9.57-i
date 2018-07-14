@@ -515,6 +515,9 @@ int cpufreq_driver_target(struct cpufreq_policy *policy,
 int __cpufreq_driver_target(struct cpufreq_policy *policy,
 				   unsigned int target_freq,
 				   unsigned int relation);
+
+/* ISHAN VARADE */
+int cpufreq_driver_target_next(struct cpufreq_policy *policy);
 unsigned int cpufreq_driver_resolve_freq(struct cpufreq_policy *policy,
 					 unsigned int target_freq);
 int cpufreq_register_governor(struct cpufreq_governor *governor);

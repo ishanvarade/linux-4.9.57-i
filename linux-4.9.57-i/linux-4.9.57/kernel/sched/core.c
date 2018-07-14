@@ -4406,6 +4406,12 @@ int sched_setscheduler(struct task_struct *p, int policy,
  */
 int global_to_ready(void * unused)
 {
+	int smp_core_id = smp_processor_id();
+	if (SCHED_SERVICE_CORE == smp_core_id)
+		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", smp_core_id);
+	else
+		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
+				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
 	/* The core '0' has choosen as Service Core. */
 	struct rq *rq = cpu_rq(SCHED_SERVICE_CORE);
 	struct dl_relq *dl_relq = &rq->relq;	// Global Release Queue
@@ -4971,12 +4977,12 @@ static void __sched_do_job_complete(void)
 			sched_dl_entity->enqueue_ready_start);
 	unsigned long long delay_ns = ktime_to_ns(delay);
 	unsigned long long deadline_ns = sched_dl_entity->dl_deadline * 1000;
-	int cpu = get_cpu();
+//	int cpu = get_cpu();
 	struct cpufreq_policy *policy;
 	if (delay_ns > deadline_ns)
 	{
-		policy = cpufreq_cpu_get_raw(cpu);
-		cpufreq_driver_target_next_frequency(policy, relation)
+//		policy = cpufreq_cpu_get_raw(cpu);
+//		cpufreq_driver_target_next(policy, relation)
 	}
 
 
@@ -5102,7 +5108,6 @@ SYSCALL_DEFINE4(sched_do_job_release, pid_t, pid, struct timespec __user*, rqtp,
 	/* is this working */
 	printk(KERN_INFO "# ISHAN VARADE: 20. sched_do_job_release systemcall called\n");
 	return do_sched_release_init(pid, rqtp, len, user_mask_ptr);
-	//return do_sched_release_init_DELETE();
 }
 
 /* ISHAN VARADE */
@@ -5141,7 +5146,7 @@ SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relat
 		printk(KERN_INFO "#ISHAN VARADE: Target Frequency: %u, Relation: %u.\n",
 				target_freq, relation);
 //		__cpufreq_driver_target(policy, target_freq, relation);
-		cpufreq_driver_target_next_frequency(policy, relation);
+		cpufreq_driver_target_next(policy);
 		return;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
