@@ -843,7 +843,7 @@ static inline int cpufreq_frequency_table_target(struct cpufreq_policy *policy,
 						    relation);
 
 	/* ISHAN VARADE */
-	printk(KERN_INFO "# ISHAN VARADE: cpufreq_frequency_table_target: SORTED %d.\n", policy->freq_table_sorted);
+//	printk(KERN_INFO "# ISHAN VARADE: cpufreq_frequency_table_target: SORTED %d.\n", policy->freq_table_sorted);
 	switch (relation) {
 	case CPUFREQ_RELATION_L:
 		return cpufreq_table_find_index_l(policy, target_freq);
