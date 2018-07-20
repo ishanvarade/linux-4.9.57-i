@@ -4408,10 +4408,11 @@ int global_to_ready(void * unused)
 {
 	int smp_core_id = smp_processor_id();
 	if (SCHED_SERVICE_CORE == smp_core_id)
-		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", smp_core_id);
+		printk(KERN_INFO "# ISHAN VARADE: global_to_ready is executing in %d", smp_core_id);
 	else
-		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
+		printk(KERN_ERR "# ISHAN VARADE: global_to_ready is executing in %d instead "
 				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
+
 	/* The core '0' has choosen as Service Core. */
 	struct rq *rq = cpu_rq(SCHED_SERVICE_CORE);
 	struct dl_relq *dl_relq = &rq->relq;	// Global Release Queue
@@ -4502,7 +4503,7 @@ int temp_to_global(void * unused)
 {
 	int smp_core_id = smp_processor_id();
 	if (SCHED_SERVICE_CORE == smp_core_id)
-		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", smp_core_id);
+		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d.\n", smp_core_id);
 	else
 		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
 				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
@@ -4804,9 +4805,9 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
 	struct rq *rq;
 	if(dl_se->task_in_temp == 1)
 	{
-		printk(KERN_INFO "ISHAN VARADE: Task in Temp");
+		printk(KERN_INFO "# ISHAN VARADE: wshp_release(): Task in Temp");
 		rq = task_rq(task);
-		printk(KERN_INFO "ISHAN VARADE: Executing wshp_release\n");
+		printk(KERN_INFO "# ISHAN VARADE: Executing wshp_release\n");
 		__acquire(rq->lock);
 		dequeue_relq_dl_task(rq, task);
 		__release(rq->lock);
@@ -4815,14 +4816,14 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
 	}
 	else
 	{
-		printk(KERN_INFO "ISHAN VARADE: Task is in global queue.");
+		printk(KERN_INFO "# ISHAN VARADE: wshp_release(): Task is in global queue.");
 		dl_se->gflag = 1;
 		timerexpired = 1;
 		//dl_se->enq_start = ktime_get();
 		if(dequeue_service_thread)
 			wake_up_process(dequeue_service_thread);
 		else
-			printk(KERN_ERR "ISHAN VARADE: Error in service thread");
+			printk(KERN_ERR "# ISHAN VARADE: wshp_release(): Error in service thread");
 	}
 }
 
@@ -4845,7 +4846,7 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	}
 	//struct sched_dl_entity *dl_se = &task->dl;
 	int cpu = smp_processor_id();
-	long period_ns = dl_se->dl_deadline * 1000 ; // dl_period
+	unsigned long period_ns = dl_se->dl_deadline * 1000 ; // dl_period
 	int ret_overrun;
 	long long actual_delay = 0;
 	ktime_t kt_now, delay, ktime_zero, enq_ktime_end, enq_ktime_delay, enq_ktime;
@@ -4902,8 +4903,8 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 	cpumask_var_t new_mask;
 	int retval = 0;
 	// undo retval = 0;
-//	if(copy_from_user(&tu, rqtp, sizeof(tu)))
-//		return -EFAULT;
+	if(copy_from_user(&tu, rqtp, sizeof(tu)))
+		return -EFAULT;
 	if (!timespec_valid(&tu))
 		return -EINVAL;
 	p = find_process_by_pid(pid);
@@ -4940,16 +4941,19 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 	//int ret;
 	//ktime_t ktime_rperiod;
 
-	if(copy_from_user(&tu, rqtp, sizeof(tu)))
-		return -EFAULT;
-	if (!timespec_valid(&tu))
-		return -EINVAL;
+//	if(copy_from_user(&tu, rqtp, sizeof(tu)))
+//		return -EFAULT;
+//	if (!timespec_valid(&tu))
+//		return -EINVAL;
 
 	p = find_process_by_pid(pid);
 
 	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init(): TU = %lld.%.91d\n", (long long)tu.tv_sec, tu.tv_nsec);
 	sched_set_restart_timer(p, &p->timer, &tu);
 
+	dl_se->move_to_temp = 1;
+	set_current_state(TASK_INTERRUPTIBLE);    // Need to move inside while
+	schedule();
 	return retval;
 }
 
@@ -5070,7 +5074,7 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 	int retval;
 
 	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
-	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real() systemcall callesched_setparam_real.\n");
+	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real() systemcall call sched_setparam_real.\n");
 
 	if (!uattr || pid < 0)// flags?
 		return -EINVAL;
