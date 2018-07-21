@@ -1475,10 +1475,12 @@ struct sched_dl_entity {
 //
 	ktime_t enq_start;	// Time noted when rt-time task released.
 	ktime_t enq_end;	// Time noted after waking up the rt-task to move in ready queue.
-	ktime_t deq_start, deq_end;
+	ktime_t deq_start;
+	ktime_t deq_end;
 
 	/* ISHAN VARADE */
-	ktime_t enqueue_ready_start, dequeue_ready_queue; // To calculate the time from task's release to move to complete its task.
+	ktime_t enqueue_ready_start; // To calculate the time from task's release to move to complete its task.
+	ktime_t dequeue_ready_queue;
 };
 
 union rcu_special {
