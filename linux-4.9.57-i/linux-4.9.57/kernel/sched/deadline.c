@@ -523,6 +523,12 @@ static int start_dl_timer(struct task_struct *p)
 	ktime_t now, act;
 	s64 delta;
 
+	/* ISHAN VARADE */
+	if (1 == dl_se->first_instance)
+	{
+		return 0;
+	}
+
 	lockdep_assert_held(&rq->lock);
 
 	/*
@@ -1258,10 +1264,14 @@ pick_next_task_dl(struct rq *rq, struct task_struct *prev, struct pin_cookie coo
 
 static void put_prev_task_dl(struct rq *rq, struct task_struct *p)
 {
-	update_curr_dl(rq);
+	/* ISHAN VARADE */
+	if (!(p->on_rq == 0))
+	{
+		update_curr_dl(rq);
 
-	if (on_dl_rq(&p->dl) && tsk_nr_cpus_allowed(p) > 1)
-		enqueue_pushable_dl_task(rq, p);
+		if (on_dl_rq(&p->dl) && tsk_nr_cpus_allowed(p) > 1)
+			enqueue_pushable_dl_task(rq, p);
+	}
 }
 
 static void task_tick_dl(struct rq *rq, struct task_struct *p, int queued)

@@ -3388,22 +3388,39 @@ static void __sched notrace __schedule(bool preempt)
 			 * Move the task into the temporary release queue of RT-Core.
 			 * The task_in_temp flag set and IPI to wakeup the temp_to_global thread.
 			 */
-			ktime_t ktime_start, ktime_end, ktime; // can make global to calculate correct time
+			ktime_t ktime_start;
+			ktime_t ktime_end;
+			ktime_t ktime; // can make global to calculate correct time
 			ktime_start = ktime_get();
 
 			if (dl_task(prev))
 			{
+
 				struct sched_dl_entity *sched_dl_entity = &prev->dl;
 				if (sched_dl_entity->move_to_temp)
 				{
+					printk (KERN_INFO "#ISHAN VARADE: __schedule() PID: %d.\n", prev->pid);
+					printk(KERN_INFO "#ISHAN VARADE: __schedule() DDDDDDDDDDDDD.\n");
 					enqueue_relq_dl_task(rq, prev); // need to lock rq
+					printk(KERN_INFO "#ISHAN VARADE: __schedule() EEEEEEEEEEEEE.\n");
+
 					sched_dl_entity->move_to_temp = false;
+					printk(KERN_INFO "#ISHAN VARADE: __schedule() FFFFFFFFFFFFF.\n");
+
 					sched_dl_entity->move_to_global = true;
+					printk(KERN_INFO "#ISHAN VARADE: __schedule() GGGGGGGGGGGGG.\n");
+
 					sched_dl_entity->task_in_temp = true;
+					printk(KERN_INFO "#ISHAN VARADE: __schedule() HHHHHHHHHHHHHH.\n");
+
 					rq->task_in_temp = true;
+					printk(KERN_INFO "#ISHAN VARADE: __schedule() IIIIIIIIIIIIIIII.\n");
+
 
 					/* IPI to wake temp_to_global thread*/
 					smp_call_function_single(SCHED_SERVICE_CORE, service_ipi_handler, NULL, 0);
+					printk(KERN_INFO "#ISHAN VARADE: __schedule() JJJJJJJJJJJJJJJJJ.\n");
+
 
 					/* Time calculation */
 					ktime_end = ktime_get();
@@ -4406,6 +4423,13 @@ int sched_setscheduler(struct task_struct *p, int policy,
  */
 int global_to_ready(void * unused)
 {
+	int smp_core_id = smp_processor_id();
+	if (SCHED_SERVICE_CORE == smp_core_id)
+		printk(KERN_INFO "# ISHAN VARADE: global_to_ready is executing in %d", smp_core_id);
+	else
+		printk(KERN_ERR "# ISHAN VARADE: global_to_ready is executing in %d instead "
+				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
+
 	/* The core '0' has choosen as Service Core. */
 	struct rq *rq = cpu_rq(SCHED_SERVICE_CORE);
 	struct dl_relq *dl_relq = &rq->relq;	// Global Release Queue
@@ -4419,12 +4443,13 @@ int global_to_ready(void * unused)
 	 */
 	while (true)
 	{
+		printk(KERN_INFO "#ISHAN VARADE: global_to_ready() Inside waked'while 111111111111111.\n");
 		/*
 		 * Do While(timerexpired)
 		 * timerexpired: Global flag set when any task has expired its release
 		 * timer and ready to move to ready queue of real-time core.
 		 */
-		do
+		while (timerexpired && dl_relq->rb_leftmost != NULL)
 		{
 			/*
 			 * Take left node from the global release queue.
@@ -4462,8 +4487,9 @@ int global_to_ready(void * unused)
 						 * Time Calculations
 						 */
 						sched_dl_entity->enq_end = ktime_get();
-						ktime_t enqueue_time = ktime_sub(sched_dl_entity->enq_end,sched_dl_entity->enq_start);
-						printk(KERN_INFO "# ISHAN VARADE: Enqueue time from release (enqueue_end - enqueue_start): %lld\n.", ktime_to_ns(enqueue_time));
+						ktime_t enqueue_time = ktime_sub(sched_dl_entity->enq_end, sched_dl_entity->enq_start);
+						printk(KERN_INFO "# ISHAN VARADE: Enqueue time from release (enqueue_end - enqueue_start)"
+								": %lld\n.", ktime_to_ns(enqueue_time));
 						sched_dl_entity->enq_end = ktime_set(0, 0);
 						sched_dl_entity->enq_start = ktime_set(0, 0);
 					}
@@ -4478,11 +4504,12 @@ int global_to_ready(void * unused)
 				}
 			}
 		}
-		while (1 == timerexpired);
+
+		set_current_state(TASK_INTERRUPTIBLE);    // Need to move inside while
+		schedule();
 	}
 
-	set_current_state(TASK_INTERRUPTIBLE);    // Need to move inside while
-	schedule();			// Search: asmlinkage __visible void __sched schedule(void)
+				// Search: asmlinkage __visible void __sched schedule(void)
 	__set_current_state(TASK_RUNNING);
 
 	return 0;
@@ -4496,7 +4523,7 @@ int temp_to_global(void * unused)
 {
 	int smp_core_id = smp_processor_id();
 	if (SCHED_SERVICE_CORE == smp_core_id)
-		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", smp_core_id);
+		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d.\n", smp_core_id);
 	else
 		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
 				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
@@ -4510,14 +4537,21 @@ int temp_to_global(void * unused)
 
 	while (true)
 	{
+		printk(KERN_INFO "# ISHAN VARADE: temp_to_global 111111111111111111\n");
 		for_each_possible_cpu(i)
 		{
+			printk(KERN_INFO "# ISHAN VARADE: temp_to_global ######## %d", i);
+
 			rq = cpu_rq(i);
 			next_node = rq->relq.rb_leftmost;
 			if (next_node != NULL)
 			{
+				printk(KERN_INFO "# ISHAN VARADE: temp_to_global 22222222222222222222\n");
+
 				if (rq->task_in_temp)   //while() loop in future
 				{
+					printk(KERN_INFO "# ISHAN VARADE: temp_to_global 33333333333333333333\n");
+
 					sched_dl_entity = rb_entry(next_node, struct sched_dl_entity, rb_node);
 					task = container_of(sched_dl_entity, struct task_struct, dl);
 
@@ -4526,13 +4560,17 @@ int temp_to_global(void * unused)
 					sched_dl_entity->task_in_temp = false;
 					/*rq->task_in_temp = false; *//* Edited: should work */
 					__release(rq->lock);
-
 					if (sched_dl_entity->move_to_global)
 					{
 						__acquire(global_rq->lock);
 						enqueue_relq_dl_task(global_rq, task);
 						__release(global_rq->lock);
 						sched_dl_entity->move_to_global = false;
+						if (global_rq->relq.rb_leftmost)
+						{
+							printk(KERN_INFO "# ISHAN VARADE: temp_to_global 44444444444444444444\n");
+
+						}
 					}
 					sched_dl_entity->deq_end = ktime_get();
 					if (sched_dl_entity->enqueue_time_flag)
@@ -4569,6 +4607,22 @@ void service_ipi_handler(void *no_arg)
 	wake_up_process(enqueue_service_thread);
 }
 
+/* ISHAN VARADE */ // DELETE
+//int dummy_thread(void * unused)
+//{
+//	printk(KERN_INFO "#ISHAN VARADE: DUMMY_DUMMY() going in while loop.\n");
+//	int cpu = get_cpu();
+//	printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", cpu);
+//	int i;
+//	//for (i = 0; ; i++)
+//	while(1)
+//	{
+//		printk(KERN_INFO "#ISHAN VARADE: DUMMY_DUMMY() infinty loop: %d .\n", i);
+//		set_current_state(TASK_INTERRUPTIBLE);
+//		schedule();
+//	}
+//	return 0;
+//}
 
 /* ISHAN VARADE */
 /**
@@ -4597,6 +4651,9 @@ int sched_setscheduler2(struct task_struct *p, const struct sched_attr *attr)
 		enqueue_service_thread = kthread_rt_create(temp_to_global, NULL, "Temp_to_global_thread");
 		kthread_bind(enqueue_service_thread, SCHED_SERVICE_CORE);
 
+//		dummy_dummy = kthread_rt_create(dummy_thread, NULL, "Temp_to_global_thread");
+//		kthread_bind(enqueue_service_thread, SCHED_SERVICE_CORE);
+
 		timerexpired = 0;
 		//	IPIexpired = 0;
 		for_each_possible_cpu(i)
@@ -4606,6 +4663,17 @@ int sched_setscheduler2(struct task_struct *p, const struct sched_attr *attr)
 		}
 
 	}
+	int cpu = get_cpu();
+
+//	if (dummy_dummy)
+//	{
+//		printk(KERN_INFO "#ISHAN VARADE: sched_setscheduler2() CPU# %d, dummy_dummy "
+//				"pid: %d, state BEFORE wake %ld, ", cpu, dummy_dummy->pid, dummy_dummy->state);
+//		wake_up_process(dummy_dummy);
+//		printk(KERN_INFO "#ISHAN VARADE: sched_setscheduler2() dummy_dummy state "
+//				"AFTER wake %ld, ", dummy_dummy->state);
+//	}
+
 	//return _sched_setscheduler(p, policy, param, true);
 	return sched_setattr(p, attr);
 }
@@ -4798,9 +4866,9 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
 	struct rq *rq;
 	if(dl_se->task_in_temp == 1)
 	{
-		printk(KERN_INFO "ISHAN VARADE: Task in Temp");
+		printk(KERN_INFO "# ISHAN VARADE: wshp_release(): Task in Temp");
 		rq = task_rq(task);
-		printk(KERN_INFO "ISHAN VARADE: Executing wshp_release\n");
+		printk(KERN_INFO "# ISHAN VARADE: Executing wshp_release\n");
 		__acquire(rq->lock);
 		dequeue_relq_dl_task(rq, task);
 		__release(rq->lock);
@@ -4809,14 +4877,14 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
 	}
 	else
 	{
-		printk(KERN_INFO "ISHAN VARADE: Task is in global queue.");
+		printk(KERN_INFO "# ISHAN VARADE: wshp_release(): Task is in global queue.");
 		dl_se->gflag = 1;
 		timerexpired = 1;
 		//dl_se->enq_start = ktime_get();
 		if(dequeue_service_thread)
 			wake_up_process(dequeue_service_thread);
 		else
-			printk(KERN_ERR "ISHAN VARADE: Error in service thread");
+			printk(KERN_ERR "# ISHAN VARADE: wshp_release(): Error in service thread");
 	}
 }
 
@@ -4839,7 +4907,11 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	}
 	//struct sched_dl_entity *dl_se = &task->dl;
 	int cpu = smp_processor_id();
-	long period_ns = dl_se->dl_deadline * 1000 ; // dl_period
+
+	/*
+	 * Any delay compensat by decreasing the same amount of delay from the period.
+	 */
+	unsigned long period_ns = dl_se->dl_deadline * 1000 ; // dl_period
 	int ret_overrun;
 	long long actual_delay = 0;
 	ktime_t kt_now, delay, ktime_zero, enq_ktime_end, enq_ktime_delay, enq_ktime;
@@ -4858,6 +4930,7 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	ktime_t ptimer = ktime_set(0, period_ns);
 	kt_now = hrtimer_cb_get_time(timer);
 	ret_overrun = hrtimer_forward(timer, kt_now, ptimer);
+	printk(KERN_INFO "# ISHAN VARADE: PERIOD_NS = %ul, kt_now = %ul.", period_ns, ktime_to_ns(kt_now));
 
 	dl_se->ktime_last = ktime_get();
 
@@ -4865,6 +4938,24 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	dl_se->enq_start = ktime_get();
 	dl_se->enqueue_ready_start = ktime_get();
 	wshp_release(timer, task);
+
+	/* ISHAN VARADE */
+//	rq = cpu_rq(SCHED_SERVICE_CORE);
+//	__acquire(rq->lock);
+//	printk (KERN_INFO "# ISHAN VARADE: wake_up_process(task):  AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n", task->pid);
+//	dequeue_relq_dl_task(rq, task);
+//	printk (KERN_INFO "# ISHAN VARADE: wake_up_process(task):  BBBBBBBBBBBBBBBBBBBBBBBBBBBBB\n", task->pid);
+//	__release(rq->lock);
+//	if(task)
+//	{
+//		printk (KERN_INFO "# ISHAN VARADE: wake_up_process(task):  %d. ........\n", task->pid);
+//		printk(KERN_INFO "#ISHAN VARADE: restart_hrtimer_callback() task state BEFORE wake %ld, ", task->state);
+//		wake_up_process(task);
+//		printk(KERN_INFO "#ISHAN VARADE: restart_hrtimer_callback() task state AFTER wake %ld, ", task->state);
+//	}
+
+
+	///////////////////////////////
 	printk(KERN_ERR "ISHAN VARADE: restart_hrtimer_callback(): Ended.\n");
 	return HRTIMER_RESTART;
 }
@@ -4875,6 +4966,8 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 void sched_set_restart_timer(struct task_struct *task, struct hrtimer *timer,
 		struct timespec *rqtp)
 {
+	printk(KERN_INFO "#ISHAN VARADE: sched_set_restart_timer() AAAAAAAAAAAAAAAAA.\n");
+
 	hrtimer_init_on_stack(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	hrtimer_set_expires_range_ns(timer, timespec_to_ktime(*rqtp), 0);
 	timer->function = &restart_hrtimer_callback;
@@ -4894,12 +4987,15 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 	struct timespec tu;
 	struct sched_dl_entity *dl_se; // Need to Remove
 	cpumask_var_t new_mask;
-	int retval = 0;
+	int retval;
 	// undo retval = 0;
-//	if(copy_from_user(&tu, rqtp, sizeof(tu)))
-//		return -EFAULT;
+	if(copy_from_user(&tu, rqtp, sizeof(tu)))
+		return -EFAULT;
 	if (!timespec_valid(&tu))
+	{
+		printk(KERN_INFO "# ISHAN VARADE: do_sched_release_init() !timespec_valid(&tu).\n");
 		return -EINVAL;
+	}
 	p = find_process_by_pid(pid);
 	dl_se = &p->dl; // Need to Remove
 
@@ -4910,7 +5006,7 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 	}
 
 	retval = get_user_cpu_mask(user_mask_ptr, len, new_mask);
-	if(!retval) //(retval == 0)
+	if(0 == retval)
 	{
 		sched_setaffinity(pid, new_mask);
 	}
@@ -4920,6 +5016,10 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 		return retval;
 	}
 	free_cpumask_var(new_mask);
+
+	int smp_core_id = smp_processor_id();
+	printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", smp_core_id);
+	struct rq *rq = cpu_rq(smp_core_id);
 
 	/*
 	 * Set timer
@@ -4934,15 +5034,37 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 	//int ret;
 	//ktime_t ktime_rperiod;
 
-	if(copy_from_user(&tu, rqtp, sizeof(tu)))
-		return -EFAULT;
-	if (!timespec_valid(&tu))
-		return -EINVAL;
+	//	if(copy_from_user(&tu, rqtp, sizeof(tu)))
+	//		return -EFAULT;
+	//	if (!timespec_valid(&tu))
+	//		return -EINVAL;
 
-	p = find_process_by_pid(pid);
+	//	p = find_process_by_pid(pid);
 
-	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init(): TU = %lld.%.91d\n", (long long)tu.tv_sec, tu.tv_nsec);
+	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init(): TU = %lld.%.91d\n",
+			(long long)tu.tv_sec, tu.tv_nsec);
 	sched_set_restart_timer(p, &p->timer, &tu);
+
+	//int ii = 1;
+	//	struct sched_dl_entity *sched_dl_entity = &p->dl; // IMPORTANT: where is updating task->dl???????/
+	//dl_se->move_to_temp = true;
+
+	//for (ii = 0; ii < 8; ii++)
+	//{
+	dl_se->move_to_temp = true;
+	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init() GOING TO SLEEEP. @@@@ :%d: \n");
+	//, ii);
+
+	//		__acquires(rq->lock);
+	//		enqueue_relq_dl_task(rq, p); // need to lock rq
+	//		__release(rq->lock);
+
+	set_current_state(TASK_INTERRUPTIBLE);    // Need to move inside while
+	schedule();
+	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init() WAKING. 8888\n");
+	//		ii = 0;
+	//	}
+	printk (KERN_INFO "# ISHAN VARADE: wake_up_process(task):  CCCCCCCCCCCCCCCCCCCCCCCCCCCC\n");
 
 	return retval;
 }
@@ -4961,7 +5083,7 @@ static void __sched_do_job_complete(void)
 	struct rq *rq = cpu_rq(cpu);
 	struct task_struct *task = rq->curr;
 	struct sched_dl_entity *sched_dl_entity = &task->dl; // IMPORTANT: where is updating task->dl???????/
-	sched_dl_entity->move_to_temp = 1;
+	sched_dl_entity->move_to_temp = true;
 
 	/* If execution  finish after soft-deadline
 	 * Than jump to next frequency to increase execution speed.
@@ -4975,14 +5097,14 @@ static void __sched_do_job_complete(void)
 	struct cpufreq_policy *policy;
 	if (delay_ns > deadline_ns)
 	{
-	//	policy = cpufreq_cpu_get_raw(cpu);
-		//cpufreq_driver_target_next_frequency(policy, relation);
+		printk (KERN_ERR "# ISHAN VARADE: CPUFREQ_DRIVER_TARGET_NEXT() called ZZZZZZZZZZZ.\n");
+//		policy = cpufreq_cpu_get_raw(cpu);
+//		cpufreq_driver_target_next(policy, relation)
 	}
-
 
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule();
-	__set_current_state(TASK_RUNNING);
+//	__set_current_state(TASK_RUNNING);
 }
 
 /* Ishan Varade */
@@ -5064,7 +5186,7 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 	int retval;
 
 	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
-	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real() systemcall callesched_setparam_real.\n");
+	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real() systemcall call sched_setparam_real.\n");
 
 	if (!uattr || pid < 0)// flags?
 		return -EINVAL;
@@ -5100,9 +5222,19 @@ SYSCALL_DEFINE4(sched_do_job_release, pid_t, pid, struct timespec __user*, rqtp,
 		unsigned int, len, unsigned long __user *, user_mask_ptr)
 {
 	/* is this working */
-	printk(KERN_INFO "# ISHAN VARADE: 20. sched_do_job_release systemcall called\n");
+	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
+	printk(KERN_INFO "# ISHAN VARADE: . sched_do_job_release() systemcall called\n");
 	return do_sched_release_init(pid, rqtp, len, user_mask_ptr);
-	//return do_sched_release_init_DELETE();
+
+//	if (dummy_dummy)
+//	{
+//		printk(KERN_INFO "#ISHAN VARADE: SCHED_DO_JOB_RELEASE() dummy_dummy state BEFORE wake %ld, ", dummy_dummy->state);
+//		wake_up_process(dummy_dummy);
+//		printk(KERN_INFO "#ISHAN VARADE: SCHED_DO_JOB_RELEASE() dummy_dummy state AFTER wake %ld, ", dummy_dummy->state);
+//
+//	}
+
+
 }
 
 /* ISHAN VARADE */
@@ -5141,7 +5273,7 @@ SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relat
 		printk(KERN_INFO "#ISHAN VARADE: Target Frequency: %u, Relation: %u.\n",
 				target_freq, relation);
 //		__cpufreq_driver_target(policy, target_freq, relation);
-//		cpufreq_driver_target_next_frequency(policy, relation);
+		cpufreq_driver_target_next(policy);
 		return;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");

@@ -1975,7 +1975,7 @@ EXPORT_SYMBOL_GPL(cpufreq_driver_target);
  * cpufreq_deriver_target_next_frequency use to change the cpu frequency to next
  * value value from the frequency table..
  */
-int cpufreq_driver_target_next_frequency(struct cpufreq_policy *policy,	unsigned int relation)
+int cpufreq_driver_target_next(struct cpufreq_policy *policy)
 {
 	printk(KERN_INFO "# ISHAN VARADE: cpufreq_driver_increase_frequenc() ");
 	unsigned int old_target_freq;//= target_freq;
@@ -2017,15 +2017,15 @@ int cpufreq_driver_target_next_frequency(struct cpufreq_policy *policy,	unsigned
 	/* ISHAN VARADE */
 	printk(KERN_INFO "This shows that target==NULL and target_index!=NULL.\n");
 
-	index = cpufreq_frequency_table_target(policy, policy->cur, relation);
+	index = cpufreq_frequency_table_target(policy, policy->cur, CPUFREQ_RELATION_L);
 
 	/* ISHAN VARADE */
 	printk(KERN_INFO "# ISHAN VARADE: Old index# %d:  and frequency: %u.\n", index, policy->cur);
-	++index;
+	--index;
 
 	return __target_index(policy, index);
 }
-EXPORT_SYMBOL_GPL(cpufreq_driver_target_next_frequency);
+EXPORT_SYMBOL_GPL(cpufreq_driver_target_next);
 
 __weak struct cpufreq_governor *cpufreq_fallback_governor(void)
 {
