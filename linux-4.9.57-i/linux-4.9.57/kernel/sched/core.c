@@ -4487,6 +4487,7 @@ int global_to_ready(void * unused)
 						 * Time Calculations
 						 */
 						sched_dl_entity->enq_end = ktime_get();
+						sched_dl_entity->enqueue_ready_start = sched_dl_entity->enq_start;
 						ktime_t enqueue_time = ktime_sub(sched_dl_entity->enq_end, sched_dl_entity->enq_start);
 						printk(KERN_INFO "# ISHAN VARADE: Enqueue time from release (enqueue_end - enqueue_start)"
 								": %lld\n.", ktime_to_ns(enqueue_time));
@@ -4936,7 +4937,14 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 
 	printk(KERN_INFO "ISHAN VARADE: Timer restarted in CPU %d\n", cpu);
 	dl_se->enq_start = ktime_get();
-	dl_se->enqueue_ready_start = ktime_get();
+
+//	dl_se->enqueue_ready_start = ktime_get();
+////	do_gettimeofday(&dl_se->timeval_start);
+//	struct timeval itv;
+//	do_gettimeofday(&itv);
+//	printk(KERN_INFO "#ISHAN VARADE: restart_hrtimer_callback() SEC: %ld, uSEC: %ld.\n", itv.tv_sec, itv.tv_usec);
+
+
 	wshp_release(timer, task);
 
 	/* ISHAN VARADE */
@@ -4980,14 +4988,13 @@ void sched_set_restart_timer(struct task_struct *task, struct hrtimer *timer,
  * First: Set affinity of the task.
  * Second: Set release timer.
  */
-static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
-		unsigned int len, unsigned long __user *user_mask_ptr)
+static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp)
 {
 	struct task_struct *p;
 	struct timespec tu;
 	struct sched_dl_entity *dl_se; // Need to Remove
-	cpumask_var_t new_mask;
-	int retval;
+//	cpumask_var_t new_mask;
+	int retval = 0;
 	// undo retval = 0;
 	if(copy_from_user(&tu, rqtp, sizeof(tu)))
 		return -EFAULT;
@@ -4999,23 +5006,23 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp,
 	p = find_process_by_pid(pid);
 	dl_se = &p->dl; // Need to Remove
 
-	if (!alloc_cpumask_var(&new_mask, GFP_KERNEL))
-	{
-		printk(KERN_INFO "# ISHAN VARADE: do_sched_release_init ENOMEM Out of memory\n");
-		return -ENOMEM;
-	}
+//	if (!alloc_cpumask_var(&new_mask, GFP_KERNEL))
+//	{
+//		printk(KERN_INFO "# ISHAN VARADE: do_sched_release_init ENOMEM Out of memory\n");
+//		return -ENOMEM;
+//	}
 
-	retval = get_user_cpu_mask(user_mask_ptr, len, new_mask);
-	if(0 == retval)
-	{
-		sched_setaffinity(pid, new_mask);
-	}
-	else
-	{
-		printk(KERN_ERR "ISHAN VARADE: do_sched_release_init() affinity may not be set");
-		return retval;
-	}
-	free_cpumask_var(new_mask);
+//	retval = get_user_cpu_mask(user_mask_ptr, len, new_mask);
+//	if(0 == retval)
+//	{
+//		sched_setaffinity(pid, new_mask);
+//	}
+//	else
+//	{
+//		printk(KERN_ERR "ISHAN VARADE: do_sched_release_init() affinity may not be set");
+//		return retval;
+//	}
+//	free_cpumask_var(new_mask);
 
 	int smp_core_id = smp_processor_id();
 	printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", smp_core_id);
@@ -5088,18 +5095,21 @@ static void __sched_do_job_complete(void)
 	/* If execution  finish after soft-deadline
 	 * Than jump to next frequency to increase execution speed.
 	 */
+
 	sched_dl_entity->dequeue_ready_queue = ktime_get();
 	ktime_t delay = ktime_sub(sched_dl_entity->dequeue_ready_queue,
 			sched_dl_entity->enqueue_ready_start);
 	unsigned long long delay_ns = ktime_to_ns(delay);
 	unsigned long long deadline_ns = sched_dl_entity->dl_deadline * 1000;
 //	int cpu = get_cpu();
+	printk (KERN_INFO "# ISHAN VARADE: DELAY_NS: %llu, DEADLINE_NS: %llu.\n",
+			delay_ns, deadline_ns);
 	struct cpufreq_policy *policy;
 	if (delay_ns > deadline_ns)
 	{
 		printk (KERN_ERR "# ISHAN VARADE: CPUFREQ_DRIVER_TARGET_NEXT() called ZZZZZZZZZZZ.\n");
-//		policy = cpufreq_cpu_get_raw(cpu);
-//		cpufreq_driver_target_next(policy, relation)
+		policy = cpufreq_cpu_get_raw(cpu);
+		cpufreq_driver_target_next(policy);
 	}
 
 	set_current_state(TASK_INTERRUPTIBLE);
@@ -5212,7 +5222,6 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 		printk(KERN_INFO "# ISHAN VARADE: P -> DL -> DL_RUNTIME: %llu.\n", p->dl.dl_runtime);
 		printk(KERN_INFO "# ISHAN VARADE: P -> DL -> dl_deadline: %llu.\n", p->dl.dl_deadline);
 	}
-
 	return retval;
 }
 
@@ -5224,7 +5233,21 @@ SYSCALL_DEFINE4(sched_do_job_release, pid_t, pid, struct timespec __user*, rqtp,
 	/* is this working */
 	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
 	printk(KERN_INFO "# ISHAN VARADE: . sched_do_job_release() systemcall called\n");
-	return do_sched_release_init(pid, rqtp, len, user_mask_ptr);
+
+//	cpumask_var_t new_mask;
+//	int retval;
+//
+//	if (!alloc_cpumask_var(&new_mask, GFP_KERNEL))
+//		return -ENOMEM;
+//
+//	retval = get_user_cpu_mask(user_mask_ptr, len, new_mask);
+//	if (retval == 0)
+//		retval = sched_setaffinity(pid, new_mask);
+//	free_cpumask_var(new_mask);
+
+	return do_sched_release_init(pid, rqtp);//, len, user_mask_ptr);
+
+//	return retval;
 
 //	if (dummy_dummy)
 //	{
