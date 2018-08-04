@@ -3399,29 +3399,13 @@ static void __sched notrace __schedule(bool preempt)
 				struct sched_dl_entity *sched_dl_entity = &prev->dl;
 				if (sched_dl_entity->move_to_temp)
 				{
-					printk (KERN_INFO "#ISHAN VARADE: __schedule() PID: %d.\n", prev->pid);
-					printk(KERN_INFO "#ISHAN VARADE: __schedule() DDDDDDDDDDDDD.\n");
 					enqueue_relq_dl_task(rq, prev); // need to lock rq
-					printk(KERN_INFO "#ISHAN VARADE: __schedule() EEEEEEEEEEEEE.\n");
-
 					sched_dl_entity->move_to_temp = false;
-					printk(KERN_INFO "#ISHAN VARADE: __schedule() FFFFFFFFFFFFF.\n");
-
 					sched_dl_entity->move_to_global = true;
-					printk(KERN_INFO "#ISHAN VARADE: __schedule() GGGGGGGGGGGGG.\n");
-
 					sched_dl_entity->task_in_temp = true;
-					printk(KERN_INFO "#ISHAN VARADE: __schedule() HHHHHHHHHHHHHH.\n");
-
 					rq->task_in_temp = true;
-					printk(KERN_INFO "#ISHAN VARADE: __schedule() IIIIIIIIIIIIIIII.\n");
-
-
 					/* IPI to wake temp_to_global thread*/
 					smp_call_function_single(SCHED_SERVICE_CORE, service_ipi_handler, NULL, 0);
-					printk(KERN_INFO "#ISHAN VARADE: __schedule() JJJJJJJJJJJJJJJJJ.\n");
-
-
 					/* Time calculation */
 					ktime_end = ktime_get();
 					ktime = ktime_sub(ktime_end, ktime_start);
@@ -4424,11 +4408,11 @@ int sched_setscheduler(struct task_struct *p, int policy,
 int global_to_ready(void * unused)
 {
 	int smp_core_id = smp_processor_id();
-	if (SCHED_SERVICE_CORE == smp_core_id)
-		printk(KERN_INFO "# ISHAN VARADE: global_to_ready is executing in %d", smp_core_id);
-	else
-		printk(KERN_ERR "# ISHAN VARADE: global_to_ready is executing in %d instead "
-				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
+//	if (SCHED_SERVICE_CORE == smp_core_id)
+//		printk(KERN_INFO "# ISHAN VARADE: global_to_ready is executing in %d", smp_core_id);
+//	else
+//		printk(KERN_ERR "# ISHAN VARADE: global_to_ready is executing in %d instead "
+//				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
 
 	/* The core '0' has choosen as Service Core. */
 	struct rq *rq = cpu_rq(SCHED_SERVICE_CORE);
@@ -4443,7 +4427,6 @@ int global_to_ready(void * unused)
 	 */
 	while (true)
 	{
-		printk(KERN_INFO "#ISHAN VARADE: global_to_ready() Inside waked'while 111111111111111.\n");
 		/*
 		 * Do While(timerexpired)
 		 * timerexpired: Global flag set when any task has expired its release
@@ -4489,7 +4472,7 @@ int global_to_ready(void * unused)
 						sched_dl_entity->enq_end = ktime_get();
 						sched_dl_entity->enqueue_ready_start = sched_dl_entity->enq_start;
 						ktime_t enqueue_time = ktime_sub(sched_dl_entity->enq_end, sched_dl_entity->enq_start);
-						printk(KERN_INFO "# ISHAN VARADE: Enqueue time from release (enqueue_end - enqueue_start)"
+						printk(KERN_INFO "# ISHAN VARADE: EnqueueOverhead : "
 								": %lld\n.", ktime_to_ns(enqueue_time));
 						sched_dl_entity->enq_end = ktime_set(0, 0);
 						sched_dl_entity->enq_start = ktime_set(0, 0);
@@ -4523,11 +4506,12 @@ int global_to_ready(void * unused)
 int temp_to_global(void * unused)
 {
 	int smp_core_id = smp_processor_id();
-	if (SCHED_SERVICE_CORE == smp_core_id)
-		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d.\n", smp_core_id);
-	else
-		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
-				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
+
+//	if (SCHED_SERVICE_CORE == smp_core_id)
+//		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d.\n", smp_core_id);
+//	else
+//		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
+//				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
 
 	struct rq *global_rq = cpu_rq(SCHED_SERVICE_CORE);
 	struct sched_dl_entity *sched_dl_entity;
@@ -4538,20 +4522,17 @@ int temp_to_global(void * unused)
 
 	while (true)
 	{
-		printk(KERN_INFO "# ISHAN VARADE: temp_to_global 111111111111111111\n");
 		for_each_possible_cpu(i)
 		{
-			printk(KERN_INFO "# ISHAN VARADE: temp_to_global ######## %d", i);
 
 			rq = cpu_rq(i);
 			next_node = rq->relq.rb_leftmost;
 			if (next_node != NULL)
 			{
-				printk(KERN_INFO "# ISHAN VARADE: temp_to_global 22222222222222222222\n");
+//				printk(KERN_INFO "# ISHAN VARADE: temp_to_global ######## %d", i);
 
 				if (rq->task_in_temp)   //while() loop in future
 				{
-					printk(KERN_INFO "# ISHAN VARADE: temp_to_global 33333333333333333333\n");
 
 					sched_dl_entity = rb_entry(next_node, struct sched_dl_entity, rb_node);
 					task = container_of(sched_dl_entity, struct task_struct, dl);
@@ -4567,11 +4548,11 @@ int temp_to_global(void * unused)
 						enqueue_relq_dl_task(global_rq, task);
 						__release(global_rq->lock);
 						sched_dl_entity->move_to_global = false;
-						if (global_rq->relq.rb_leftmost)
-						{
-							printk(KERN_INFO "# ISHAN VARADE: temp_to_global 44444444444444444444\n");
-
-						}
+//						if (global_rq->relq.rb_leftmost)
+//						{
+//							printk(KERN_INFO "# ISHAN VARADE: temp_to_global 44444444444444444444\n");
+//
+//						}
 					}
 					sched_dl_entity->deq_end = ktime_get();
 					if (sched_dl_entity->enqueue_time_flag)
@@ -4579,9 +4560,7 @@ int temp_to_global(void * unused)
 						ktime_t deq_time = ktime_sub(sched_dl_entity->deq_end,
 								sched_dl_entity->deq_start);
 						sched_dl_entity->enqueue_time_flag = false;
-						printk(KERN_INFO "# ISHAN VARADE: Elapsed time from IPI "
-								"till finished the temp_to_global thread move the "
-								"task in Global Release queue: %lld.\n",
+						printk(KERN_INFO "# ISHAN VARADE: DequeueOverHead : %lld.\n",
 								ktime_to_ns(deq_time));
 					}
 					sched_dl_entity->deq_start = ktime_set(0, 0);
@@ -4642,10 +4621,9 @@ int sched_setscheduler2(struct task_struct *p, const struct sched_attr *attr)
 	int i;
 	struct rq *rq;
 
-	printk(KERN_INFO "# ISHAN VARADE: 3. sched_setscheduler2()  called\n");
 	if(false == create_servicethread_flag)
 	{
-		printk(KERN_INFO "# ISHAN VARADE: 3. sched_setscheduler2(): Creating Threads \n");
+		printk(KERN_INFO "# ISHAN VARADE: sched_setscheduler2(): Creating Threads GlobalToReady & TempToGlobal\n");
 		create_servicethread_flag = true;
 		dequeue_service_thread = kthread_rt_create(global_to_ready, NULL, "Global_to_ready_thread");
 		kthread_bind(dequeue_service_thread, SCHED_SERVICE_CORE);
@@ -4867,9 +4845,7 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
 	struct rq *rq;
 	if(dl_se->task_in_temp == 1)
 	{
-		printk(KERN_INFO "# ISHAN VARADE: wshp_release(): Task in Temp");
 		rq = task_rq(task);
-		printk(KERN_INFO "# ISHAN VARADE: Executing wshp_release\n");
 		__acquire(rq->lock);
 		dequeue_relq_dl_task(rq, task);
 		__release(rq->lock);
@@ -4878,7 +4854,6 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
 	}
 	else
 	{
-		printk(KERN_INFO "# ISHAN VARADE: wshp_release(): Task is in global queue.");
 		dl_se->gflag = 1;
 		timerexpired = 1;
 		//dl_se->enq_start = ktime_get();
@@ -4895,7 +4870,6 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
  */
 static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 {
-	printk(KERN_ERR "ISHAN VARADE: restart_hrtimer_callback(): Started.\n");
 	ktime_t enq_ktime_start = ktime_get();
 	struct task_struct *task = container_of(timer, struct task_struct, timer);
 	struct sched_dl_entity *dl_se = &task->dl;
@@ -4931,11 +4905,8 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 	ktime_t ptimer = ktime_set(0, period_ns);
 	kt_now = hrtimer_cb_get_time(timer);
 	ret_overrun = hrtimer_forward(timer, kt_now, ptimer);
-	printk(KERN_INFO "# ISHAN VARADE: PERIOD_NS = %ul, kt_now = %ul.", period_ns, ktime_to_ns(kt_now));
-
 	dl_se->ktime_last = ktime_get();
 
-	printk(KERN_INFO "ISHAN VARADE: Timer restarted in CPU %d\n", cpu);
 	dl_se->enq_start = ktime_get();
 
 //	dl_se->enqueue_ready_start = ktime_get();
@@ -4964,7 +4935,6 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 
 
 	///////////////////////////////
-	printk(KERN_ERR "ISHAN VARADE: restart_hrtimer_callback(): Ended.\n");
 	return HRTIMER_RESTART;
 }
 
@@ -4974,8 +4944,6 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 void sched_set_restart_timer(struct task_struct *task, struct hrtimer *timer,
 		struct timespec *rqtp)
 {
-	printk(KERN_INFO "#ISHAN VARADE: sched_set_restart_timer() AAAAAAAAAAAAAAAAA.\n");
-
 	hrtimer_init_on_stack(timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	hrtimer_set_expires_range_ns(timer, timespec_to_ktime(*rqtp), 0);
 	timer->function = &restart_hrtimer_callback;
@@ -5048,8 +5016,6 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp)
 
 	//	p = find_process_by_pid(pid);
 
-	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init(): TU = %lld.%.91d\n",
-			(long long)tu.tv_sec, tu.tv_nsec);
 	sched_set_restart_timer(p, &p->timer, &tu);
 
 	//int ii = 1;
@@ -5069,9 +5035,6 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp)
 	set_current_state(TASK_INTERRUPTIBLE);    // Need to move inside while
 	schedule();
 	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init() WAKING. 8888\n");
-	//		ii = 0;
-	//	}
-	printk (KERN_INFO "# ISHAN VARADE: wake_up_process(task):  CCCCCCCCCCCCCCCCCCCCCCCCCCCC\n");
 
 	return retval;
 }
@@ -5085,7 +5048,6 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp)
  */
 static void __sched_do_job_complete(void)
 {
-	printk(KERN_INFO "# ISHAN VARADE: __sched_do_job_complete(): \n");
 	int cpu = smp_processor_id();
 	struct rq *rq = cpu_rq(cpu);
 	struct task_struct *task = rq->curr;
@@ -5097,24 +5059,19 @@ static void __sched_do_job_complete(void)
 	 */
 
 	sched_dl_entity->dequeue_ready_queue = ktime_get();
-	ktime_t delay = ktime_sub(sched_dl_entity->dequeue_ready_queue,
-			sched_dl_entity->enqueue_ready_start);
+	ktime_t delay = ktime_sub(sched_dl_entity->dequeue_ready_queue, sched_dl_entity->enqueue_ready_start);
 	unsigned long long delay_ns = ktime_to_ns(delay);
 	unsigned long long deadline_ns = sched_dl_entity->dl_deadline * 1000;
-//	int cpu = get_cpu();
-	printk (KERN_INFO "# ISHAN VARADE: DELAY_NS: %llu, DEADLINE_NS: %llu.\n",
-			delay_ns, deadline_ns);
 	struct cpufreq_policy *policy;
-	if (delay_ns > deadline_ns)
+	/*if (delay_ns > deadline_ns)
 	{
 		printk (KERN_ERR "# ISHAN VARADE: CPUFREQ_DRIVER_TARGET_NEXT() called ZZZZZZZZZZZ.\n");
 		policy = cpufreq_cpu_get_raw(cpu);
 		cpufreq_driver_target_next(policy);
-	}
+	}*/
 
 	set_current_state(TASK_INTERRUPTIBLE);
 	schedule();
-//	__set_current_state(TASK_RUNNING);
 }
 
 /* Ishan Varade */
@@ -5126,7 +5083,7 @@ static void __sched_task_complete(void)
 	struct task_struct *task = current;
 	struct sched_dl_entity *sched_dl_entity = &task->dl;
 	sched_dl_entity->first_instance = -1;
-	printk(KERN_INFO "#ISHAN VARADE: Real-time execution task finished.\n");
+	printk(KERN_INFO "#ISHAN VARADE: Real-time execution task FINISHED.\n");
 	hrtimer_cancel(&task->timer);
 	destroy_hrtimer_on_stack(&task->timer);
 }
@@ -5195,14 +5152,12 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 	struct task_struct *p;
 	int retval;
 
-	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
-	printk(KERN_INFO "# ISHAN VARADE: 1. sched_setparam_real() systemcall call sched_setparam_real.\n");
+	printk(KERN_INFO "# ISHAN VARADE: sched_setparam_real()######################\n");
 
 	if (!uattr || pid < 0)// flags?
 		return -EINVAL;
 
 	retval = sched_copy_attr(uattr, &attr);
-	printk(KERN_INFO "# ISHAN VARADE: 2.attr: policy: %d\n", attr.sched_policy);
 	if (retval)
 		return retval;
 
@@ -5217,11 +5172,6 @@ SYSCALL_DEFINE2(sched_setparam_real, pid_t, pid, struct sched_attr __user *, uat
 	//retval = sched_setattr(p, &attr);
 	rcu_read_unlock();
 
-	if (p)
-	{
-		printk(KERN_INFO "# ISHAN VARADE: P -> DL -> DL_RUNTIME: %llu.\n", p->dl.dl_runtime);
-		printk(KERN_INFO "# ISHAN VARADE: P -> DL -> dl_deadline: %llu.\n", p->dl.dl_deadline);
-	}
 	return retval;
 }
 
@@ -5231,9 +5181,7 @@ SYSCALL_DEFINE4(sched_do_job_release, pid_t, pid, struct timespec __user*, rqtp,
 		unsigned int, len, unsigned long __user *, user_mask_ptr)
 {
 	/* is this working */
-	printk(KERN_INFO "# ISHAN VARADE: ########################################\n");
-	printk(KERN_INFO "# ISHAN VARADE: . sched_do_job_release() systemcall called\n");
-
+	printk(KERN_INFO "# ISHAN VARADE: sched_do_job_release() ####################\n");
 //	cpumask_var_t new_mask;
 //	int retval;
 //
@@ -5266,6 +5214,8 @@ SYSCALL_DEFINE4(sched_do_job_release, pid_t, pid, struct timespec __user*, rqtp,
  */
 SYSCALL_DEFINE0(sched_do_job_complete)
 {
+
+	printk(KERN_INFO "# ISHAN VARADE: sched_do_job_complete() ##########################\n");
 	__sched_do_job_complete();
 }
 
