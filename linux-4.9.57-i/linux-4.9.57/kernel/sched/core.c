@@ -3388,10 +3388,10 @@ static void __sched notrace __schedule(bool preempt)
 			 * Move the task into the temporary release queue of RT-Core.
 			 * The task_in_temp flag set and IPI to wakeup the temp_to_global thread.
 			 */
-			ktime_t ktime_start;
-			ktime_t ktime_end;
-			ktime_t ktime; // can make global to calculate correct time
-			ktime_start = ktime_get();
+//			ktime_t ktime_start;
+//			ktime_t ktime_end;
+//			ktime_t ktime; // can make global to calculate correct time
+//			ktime_start = ktime_get();
 
 			if (dl_task(prev))
 			{
@@ -3407,10 +3407,10 @@ static void __sched notrace __schedule(bool preempt)
 					/* IPI to wake temp_to_global thread*/
 					smp_call_function_single(SCHED_SERVICE_CORE, service_ipi_handler, NULL, 0);
 					/* Time calculation */
-					ktime_end = ktime_get();
-					ktime = ktime_sub(ktime_end, ktime_start);
-					printk(KERN_INFO "#ISHAN VARADE: __ schedule() Time take for execution of "
-							"sched_do_job_complete: %lld\n", ktime_to_ns(ktime));
+//					ktime_end = ktime_get();
+//					ktime = ktime_sub(ktime_end, ktime_start);
+//					printk(KERN_INFO "#ISHAN VARADE: __ schedule() Time take for execution of "
+//							"sched_do_job_complete: %lld\n", ktime_to_ns(ktime));
 
 					/* Time calculation till temp_to_global thread finished */
 					sched_dl_entity->deq_start = ktime_get();
@@ -4408,19 +4408,22 @@ int sched_setscheduler(struct task_struct *p, int policy,
 int global_to_ready(void * unused)
 {
 	int smp_core_id = smp_processor_id();
-//	if (SCHED_SERVICE_CORE == smp_core_id)
-//		printk(KERN_INFO "# ISHAN VARADE: global_to_ready is executing in %d", smp_core_id);
-//	else
-//		printk(KERN_ERR "# ISHAN VARADE: global_to_ready is executing in %d instead "
-//				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
-
-	/* The core '0' has choosen as Service Core. */
-	struct rq *rq = cpu_rq(SCHED_SERVICE_CORE);
-	struct dl_relq *dl_relq = &rq->relq;	// Global Release Queue
+	struct rq *rq;
+	struct dl_relq *dl_relq;
 	unsigned long flags;
 	struct rb_node *left, *next;
 	struct sched_dl_entity *sched_dl_entity;
 	struct task_struct *task;
+	ktime_t enqueue_time;
+
+	if (SCHED_SERVICE_CORE == smp_core_id)
+		printk(KERN_INFO "# ISHAN VARADE: global_to_ready is executing in %d", smp_core_id);
+	else
+		printk(KERN_ERR "# ISHAN VARADE: global_to_ready is executing in %d instead "
+				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
+
+	rq = cpu_rq(SCHED_SERVICE_CORE);
+	dl_relq = &rq->relq;	// Global Release Queue
 
 	/*
 	 * Infinite while loop.
@@ -4471,8 +4474,8 @@ int global_to_ready(void * unused)
 						 */
 						sched_dl_entity->enq_end = ktime_get();
 						sched_dl_entity->enqueue_ready_start = sched_dl_entity->enq_start;
-						ktime_t enqueue_time = ktime_sub(sched_dl_entity->enq_end, sched_dl_entity->enq_start);
-						printk(KERN_INFO "# ISHAN VARADE: EnqueueOverhead : "
+						enqueue_time = ktime_sub(sched_dl_entity->enq_end, sched_dl_entity->enq_start);
+						printk(KERN_INFO "#ISHAN VARADE:EnqueueOverhead: "
 								": %lld\n.", ktime_to_ns(enqueue_time));
 						sched_dl_entity->enq_end = ktime_set(0, 0);
 						sched_dl_entity->enq_start = ktime_set(0, 0);
@@ -4507,11 +4510,6 @@ int temp_to_global(void * unused)
 {
 	int smp_core_id = smp_processor_id();
 
-//	if (SCHED_SERVICE_CORE == smp_core_id)
-//		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d.\n", smp_core_id);
-//	else
-//		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
-//				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
 
 	struct rq *global_rq = cpu_rq(SCHED_SERVICE_CORE);
 	struct sched_dl_entity *sched_dl_entity;
@@ -4520,10 +4518,17 @@ int temp_to_global(void * unused)
 	struct rb_node *next_node;
 	int i;
 
+	if (SCHED_SERVICE_CORE == smp_core_id)
+		printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d.\n", smp_core_id);
+	else
+		printk(KERN_ERR "# ISHAN VARADE: temp_to_global is executing in %d instead "
+				"and not in SCHED_SERVICE_CORE = %d", smp_core_id, SCHED_SERVICE_CORE);
+
+
 	while (true)
 	{
 		for_each_possible_cpu(i)
-		{
+				{
 
 			rq = cpu_rq(i);
 			next_node = rq->relq.rb_leftmost;
@@ -4560,7 +4565,7 @@ int temp_to_global(void * unused)
 						ktime_t deq_time = ktime_sub(sched_dl_entity->deq_end,
 								sched_dl_entity->deq_start);
 						sched_dl_entity->enqueue_time_flag = false;
-						printk(KERN_INFO "# ISHAN VARADE: DequeueOverHead : %lld.\n",
+						printk(KERN_INFO "#ISHAN VARADE:DequeueOverHead: %lld.\n",
 								ktime_to_ns(deq_time));
 					}
 					sched_dl_entity->deq_start = ktime_set(0, 0);
@@ -4642,7 +4647,7 @@ int sched_setscheduler2(struct task_struct *p, const struct sched_attr *attr)
 		}
 
 	}
-	int cpu = get_cpu();
+//	int cpu = get_cpu();
 
 //	if (dummy_dummy)
 //	{
@@ -4780,56 +4785,56 @@ static int sched_copy_attr(struct sched_attr __user *uattr,
 }
 
 /*ISHAN VARADE*/
-static int
-do_sched_setscheduler2(pid_t pid, struct sched_attr __user *uattr)
-{
-	/*struct sched_attr lparam;
-	struct task_struct *p;
-	int retval;
-
-	if (!param || pid < 0)
-		return -EINVAL;
-	if (copy_from_user(&lparam, param, sizeof(struct sched_attr)))
-		return -EFAULT;
-
-	rcu_read_lock();
-	retval = -ESRCH;
-	p = find_process_by_pid(pid);
-	if (p != NULL)
-		retval = sched_setscheduler2(p, policy, &lparam);
-	rcu_read_unlock();
-
-	return retval;
-	 */
-	////////////////////////////
-
-	struct sched_attr attr;
-	struct task_struct *p;
-	int retval;
-	printk(KERN_INFO "# ISHAN VARADE: 2. do_sched_setscheduler2  called\n");
-
-	if (!uattr || pid < 0)// flags?
-		return -EINVAL;
-
-	retval = sched_copy_attr(uattr, &attr);
-	//	printk(KERN_INFO "# ISHAN VARADE: attr: policy: %d, deadline: %ld, %ld\n", attr.sched_policy, attr.sched_deadline, attr.sched_runtime);
-	printk(KERN_INFO "# ISHAN VARADE: 2.attr: policy: %d\n", attr.sched_policy);
-	if (retval)
-		return retval;
-
-	if ((int)attr.sched_policy < 0)
-		return -EINVAL;
-
-	rcu_read_lock();
-	retval = -ESRCH;
-	p = find_process_by_pid(pid);
-	if (p != NULL)
-		retval = sched_setscheduler2(p, &attr);
-	//retval = sched_setattr(p, &attr);
-	rcu_read_unlock();
-
-	return retval;
-}
+//static int
+//do_sched_setscheduler2(pid_t pid, struct sched_attr __user *uattr)
+//{
+//	/*struct sched_attr lparam;
+//	struct task_struct *p;
+//	int retval;
+//
+//	if (!param || pid < 0)
+//		return -EINVAL;
+//	if (copy_from_user(&lparam, param, sizeof(struct sched_attr)))
+//		return -EFAULT;
+//
+//	rcu_read_lock();
+//	retval = -ESRCH;
+//	p = find_process_by_pid(pid);
+//	if (p != NULL)
+//		retval = sched_setscheduler2(p, policy, &lparam);
+//	rcu_read_unlock();
+//
+//	return retval;
+//	 */
+//	////////////////////////////
+//
+//	struct sched_attr attr;
+//	struct task_struct *p;
+//	int retval;
+//	printk(KERN_INFO "# ISHAN VARADE: 2. do_sched_setscheduler2  called\n");
+//
+//	if (!uattr || pid < 0)// flags?
+//		return -EINVAL;
+//
+//	retval = sched_copy_attr(uattr, &attr);
+//	//	printk(KERN_INFO "# ISHAN VARADE: attr: policy: %d, deadline: %ld, %ld\n", attr.sched_policy, attr.sched_deadline, attr.sched_runtime);
+//	printk(KERN_INFO "# ISHAN VARADE: 2.attr: policy: %d\n", attr.sched_policy);
+//	if (retval)
+//		return retval;
+//
+//	if ((int)attr.sched_policy < 0)
+//		return -EINVAL;
+//
+//	rcu_read_lock();
+//	retval = -ESRCH;
+//	p = find_process_by_pid(pid);
+//	if (p != NULL)
+//		retval = sched_setscheduler2(p, &attr);
+//	//retval = sched_setattr(p, &attr);
+//	rcu_read_unlock();
+//
+//	return retval;
+//}
 
 /*	ISHAN VARADE */
 /*
@@ -4838,10 +4843,11 @@ do_sched_setscheduler2(pid_t pid, struct sched_attr __user *uattr)
  * _Else_ this means the task is in global release queue. And need to be move from
  * there to ready queue. For this just need to wake-up global_to_ready kernel thread.
  */
-static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_struct *task)
+//static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_struct *task)
+void wshp_release(struct hrtimer *timer, struct task_struct *task)
 {
 	struct sched_dl_entity *dl_se = &task->dl;
-	struct rq *relq = dl_se->dl_relq;
+//	struct rq *relq = dl_se->dl_relq;
 	struct rq *rq;
 	if(dl_se->task_in_temp == 1)
 	{
@@ -4870,10 +4876,16 @@ static enum hrtimer_restart wshp_release(struct hrtimer *timer,	struct task_stru
  */
 static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 {
-	ktime_t enq_ktime_start = ktime_get();
+//	ktime_t enq_ktime_start = ktime_get();
 	struct task_struct *task = container_of(timer, struct task_struct, timer);
 	struct sched_dl_entity *dl_se = &task->dl;
 	struct rq *rq = cpu_rq(smp_processor_id());
+	unsigned long period_ns;
+	int ret_overrun;
+	long long actual_delay = 0;
+	ktime_t kt_now, delay, ktime_zero; // enq_ktime_end, enq_ktime_delay,, enq_ktime
+	ktime_t ptimer;
+
 	__release(rq->lock);
 	if(-1 == dl_se->first_instance)
 	{
@@ -4881,15 +4893,12 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 		return HRTIMER_NORESTART;
 	}
 	//struct sched_dl_entity *dl_se = &task->dl;
-	int cpu = smp_processor_id();
+//	int cpu = smp_processor_id();
 
 	/*
 	 * Any delay compensat by decreasing the same amount of delay from the period.
 	 */
-	unsigned long period_ns = dl_se->dl_deadline * 1000 ; // dl_period
-	int ret_overrun;
-	long long actual_delay = 0;
-	ktime_t kt_now, delay, ktime_zero, enq_ktime_end, enq_ktime_delay, enq_ktime;
+	period_ns = dl_se->dl_deadline * 1000 ; // dl_period
 	ktime_zero = ktime_set(0,0);
 
 	if(!ktime_equal(dl_se->ktime_last, ktime_zero))
@@ -4902,7 +4911,7 @@ static enum hrtimer_restart restart_hrtimer_callback(struct hrtimer *timer)
 			period_ns = period_ns - (ktime_to_ns(delay) - period_ns);
 		}
 	}
-	ktime_t ptimer = ktime_set(0, period_ns);
+	ptimer = ktime_set(0, period_ns);
 	kt_now = hrtimer_cb_get_time(timer);
 	ret_overrun = hrtimer_forward(timer, kt_now, ptimer);
 	dl_se->ktime_last = ktime_get();
@@ -4992,9 +5001,9 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp)
 //	}
 //	free_cpumask_var(new_mask);
 
-	int smp_core_id = smp_processor_id();
-	printk(KERN_INFO "# ISHAN VARADE: temp_to_global is executing in %d", smp_core_id);
-	struct rq *rq = cpu_rq(smp_core_id);
+//	int smp_core_id = smp_processor_id();
+	printk(KERN_INFO "# ISHAN VARADE: PID %d is executing in %d", p->pid, smp_processor_id());
+//	struct rq *rq = cpu_rq(smp_core_id);
 
 	/*
 	 * Set timer
@@ -5025,7 +5034,7 @@ static int do_sched_release_init(pid_t pid, struct timespec __user* rqtp)
 	//for (ii = 0; ii < 8; ii++)
 	//{
 	dl_se->move_to_temp = true;
-	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init() GOING TO SLEEEP. @@@@ :%d: \n");
+	printk (KERN_INFO "# ISHAN VARADE: do_sched_release_init() GOING TO SLEEEP. @@@@.\n");
 	//, ii);
 
 	//		__acquires(rq->lock);
@@ -5052,6 +5061,10 @@ static void __sched_do_job_complete(void)
 	struct rq *rq = cpu_rq(cpu);
 	struct task_struct *task = rq->curr;
 	struct sched_dl_entity *sched_dl_entity = &task->dl; // IMPORTANT: where is updating task->dl???????/
+	unsigned long long delay_ns;
+	unsigned long long deadline_ns;
+	struct cpufreq_policy *policy;
+
 	sched_dl_entity->move_to_temp = true;
 
 	/* If execution  finish after soft-deadline
@@ -5059,10 +5072,11 @@ static void __sched_do_job_complete(void)
 	 */
 
 	sched_dl_entity->dequeue_ready_queue = ktime_get();
-	ktime_t delay = ktime_sub(sched_dl_entity->dequeue_ready_queue, sched_dl_entity->enqueue_ready_start);
-	unsigned long long delay_ns = ktime_to_ns(delay);
-	unsigned long long deadline_ns = sched_dl_entity->dl_deadline * 1000;
-	struct cpufreq_policy *policy;
+	ktime_t delay;
+	delay = ktime_sub(sched_dl_entity->dequeue_ready_queue, sched_dl_entity->enqueue_ready_start);
+	delay_ns = ktime_to_ns(delay);
+	deadline_ns = sched_dl_entity->dl_deadline * 1000;
+	printk (KERN_INFO "# ISHAN VARADE:ExecutionTime: %llu.\n", delay_ns);
 	/*if (delay_ns > deadline_ns)
 	{
 		printk (KERN_ERR "# ISHAN VARADE: CPUFREQ_DRIVER_TARGET_NEXT() called ZZZZZZZZZZZ.\n");
@@ -5092,17 +5106,17 @@ static void __sched_task_complete(void)
 /*
  *
  */
-static u32 cpu_freq_read_intel(void)
-{
-	u32 val, dummy;
-
-	int cpu = get_cpu();
-
-	printk(KERN_INFO "#ISHAN VARADE: CPU#: %d.\n", cpu);
-	rdmsr(MSR_IA32_PERF_CTL, val, dummy);
-	printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, CPU_FREQ_READ_INTEL: %lu\n", cpu, val);
-	return val;
-}
+//static u32 cpu_freq_read_intel(void)
+//{
+//	u32 val, dummy;
+//
+//	int cpu = get_cpu();
+//
+//	printk(KERN_INFO "#ISHAN VARADE: CPU#: %d.\n", cpu);
+//	rdmsr(MSR_IA32_PERF_CTL, val, dummy);
+//	printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, CPU_FREQ_READ_INTEL: %lu\n", cpu, val);
+//	return val;
+//}
 
 /*
  * ISHAN VARADE:
@@ -5110,15 +5124,16 @@ static u32 cpu_freq_read_intel(void)
 void cpufreq_set(unsigned int freq)
 {
 	unsigned int buf_freq = 1900000;
-	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
 	int cpu = get_cpu();
 	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
+
+	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
 	if (policy)
 	{
 		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n", cpu, policy->governor->name);
 		policy->governor->store_setspeed(policy, freq);
 //		policy->governor->show_setspeed(policy, buf_freq);
-		printk(KERN_INFO "#ISHAN VARADE: BUF_FREQ: %s.\n", buf_freq);
+		printk(KERN_INFO "#ISHAN VARADE: BUF_FREQ: %u.\n", buf_freq);
 		return;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
@@ -5217,6 +5232,7 @@ SYSCALL_DEFINE0(sched_do_job_complete)
 
 	printk(KERN_INFO "# ISHAN VARADE: sched_do_job_complete() ##########################\n");
 	__sched_do_job_complete();
+	return 0;
 }
 
 /* Ishan Varade */
@@ -5226,6 +5242,7 @@ SYSCALL_DEFINE0(sched_do_job_complete)
 SYSCALL_DEFINE0(sched_task_complete)
 {
 	__sched_task_complete();
+	return 0;
 }
 
 /*
@@ -5234,10 +5251,12 @@ SYSCALL_DEFINE0(sched_task_complete)
  */
 SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relation)
 {
-	printk (KERN_INFO "# ISHAN VARADE: DUMMY SYSTEM CALL CALLED.\n");
-	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
+
 	int cpu = get_cpu();
 	struct cpufreq_policy *policy = cpufreq_cpu_get_raw(cpu);
+
+	printk (KERN_INFO "# ISHAN VARADE: DUMMY SYSTEM CALL CALLED.\n");
+	printk(KERN_ERR "# ISHAN VARADE: cpufreq_rdms_info calling.\n");
 	if (policy)
 	{
 		printk(KERN_INFO "#ISHAN VARADE: CPU#: %d, policy is passed.: %s\n",
@@ -5247,7 +5266,7 @@ SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relat
 				target_freq, relation);
 //		__cpufreq_driver_target(policy, target_freq, relation);
 		cpufreq_driver_target_next(policy);
-		return;
+		return 0;
 	}
 	printk(KERN_ERR "#ISHAN VARADE: Policy was NULL pointer.");
 
@@ -5259,6 +5278,8 @@ SYSCALL_DEFINE2(sched_dummy_call, unsigned int, target_freq, unsigned int, relat
 	/*
 	 *
 	 */
+
+	return 0;
 }
 
 /**

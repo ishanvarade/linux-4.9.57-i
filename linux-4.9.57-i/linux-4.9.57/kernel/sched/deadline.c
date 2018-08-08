@@ -989,9 +989,9 @@ void dequeue_relq_dl_task(struct rq *rq, struct task_struct *p)
                 dl_se->dequeue_time_flag =0;
         } */
 
-	long long int enqueue_time;
-	ktime_t den, ktimeDe;
-	long long int dequeue_time;
+//	long long int enqueue_time;
+//	ktime_t den, ktimeDe;
+//	long long int dequeue_time;
 	/*
 
          if(dl_se->dequeue_time_flag == 1 && smp_processor_id() == 0){

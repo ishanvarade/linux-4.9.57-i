@@ -107,7 +107,7 @@ extern void dequeue_relq_dl_task(struct rq *rq, struct task_struct *p);
 //
 extern int timerexpired;
 /* Service Core */
-#define SCHED_SERVICE_CORE 0
+#define SCHED_SERVICE_CORE 1
 
 //extern int IPIexpired;
 //

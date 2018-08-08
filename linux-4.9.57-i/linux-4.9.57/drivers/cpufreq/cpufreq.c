@@ -1977,9 +1977,9 @@ EXPORT_SYMBOL_GPL(cpufreq_driver_target);
  */
 int cpufreq_driver_target_next(struct cpufreq_policy *policy)
 {
-	printk(KERN_INFO "# ISHAN VARADE: cpufreq_driver_increase_frequenc() ");
-	unsigned int old_target_freq;//= target_freq;
 	int index;
+	printk(KERN_INFO "# ISHAN VARADE: cpufreq_driver_increase_frequenc() ");
+//	unsigned int old_target_freq;//= target_freq;
 
 	if (cpufreq_disabled())
 		return -ENODEV;
